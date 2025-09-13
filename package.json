@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "name": "devnest-open-source",
+  "version": "1.0.0",
+  "description": "1. **Clone Repository**\r ```bash\r git clone https://github.com/VishalYadav1008/devnest-ai.git\r code devnest-ai",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
