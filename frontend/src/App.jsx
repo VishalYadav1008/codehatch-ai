@@ -1,35 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
-
-export default App
+// Folder toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const folders = document.querySelectorAll('.file-item.folder');
+    folders.forEach(folder => {
+        folder.addEventListener('click', function(e) {
+            if (e.target !== this && !e.target.classList.contains('action-btn')) {
+                return;
+            }
+            this.classList.toggle('open');
+            const icon = this.querySelector('.file-icon i');
+            if (this.classList.contains('open')) {
+                icon.classList.remove('fa-folder');
+                icon.classList.add('fa-folder-open');
+            } else {
+                icon.classList.remove('fa-folder-open');
+                icon.classList.add('fa-folder');
+            }
+        });
+    });
+    
+    // Tab switching functionality
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Login button functionality
+    document.querySelector('.btn-primary').addEventListener('click', function() {
+        alert('Login functionality would open here');
+    });
+    
+    document.querySelector('.btn-secondary').addEventListener('click', function() {
+        alert('Sign up functionality would open here');
+    });
+    
+    document.querySelector('.login-btn').addEventListener('click', function() {
+        alert('Login logic would execute here with backend API call');
+    });
+});
