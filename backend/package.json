@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'No build needed'"
+    "build": "echo 'No build process needed'",
+    "test": "echo 'No tests specified'"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -17,7 +18,16 @@
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["nodejs", "express", "ai", "backend"],
-  "author": "Your Name",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "supabase",
+    "backend",
+    "api"
+  ],
+  "author": "Vishal Yadav",
   "license": "MIT"
 }
