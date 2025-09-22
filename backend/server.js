@@ -88,7 +88,6 @@ app.get('/api/health', async (req, res) => {
 // 🟢 Registration, Login, Profile, AI, Chat History endpoints
 // (same as tumhare code me, maine untouched chhoda hai)
 
-
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
@@ -110,10 +109,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// 🚀 Start server
-app.listen(PORT, () => {
-  const baseURL = process.env.RENDER_EXTERNAL_URL || process.env.VERCEL_URL || `http://localhost:${PORT}`;
-  console.log(`
+// 🚀 VERCEL COMPATIBILITY - YEH CHANGE KARO
+const PORT = process.env.PORT || 5000;
+
+// Vercel ke liye export (IMPORTANT)
+module.exports = app;
+
+// Sirf local development ke liye listen karo
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    const baseURL = process.env.RENDER_EXTERNAL_URL || process.env.VERCEL_URL || `http://localhost:${PORT}`;
+    console.log(`
 ╔══════════════════════════════════════════════════════╗
 ║                                                      ║
 ║   🚀 Devnest Server with Supabase                   ║
@@ -124,7 +130,6 @@ app.listen(PORT, () => {
 ║   Auth: ${process.env.JWT_SECRET ? '✅ JWT' : '❌ Disabled'}               ║
 ║                                                      ║
 ╚══════════════════════════════════════════════════════╝
-  `);
-});
-
-module.exports = app;
+    `);
+  });
+}
