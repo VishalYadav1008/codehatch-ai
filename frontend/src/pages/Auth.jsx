@@ -1,9 +1,13 @@
-// Frontend Authentication Functions
+// ================================
+// 🔗 Backend API Base URL
+const API_BASE_URL = "https://devnest-ai.onrender.com";
+// ================================
+
 
 // Login function
 async function loginUser(email, password) {
     try {
-        const response = await fetch('http://localhost:5000/api/login', {
+        const response = await fetch(`${API_BASE_URL}/api/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -14,11 +18,8 @@ async function loginUser(email, password) {
         const data = await response.json();
         
         if (response.ok) {
-            // Save token to localStorage
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
-            
-            // Redirect to dashboard
             window.location.href = '/dashboard.html';
         } else {
             alert(data.message || 'Login failed');
@@ -32,7 +33,7 @@ async function loginUser(email, password) {
 // Register function
 async function registerUser(email, password) {
     try {
-        const response = await fetch('http://localhost:5000/api/register', {
+        const response = await fetch(`${API_BASE_URL}/api/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -44,7 +45,6 @@ async function registerUser(email, password) {
         
         if (response.ok) {
             alert('Registration successful! Please login.');
-            // Redirect to login page or switch to login form
             showLoginForm();
         } else {
             alert(data.message || 'Registration failed');
@@ -83,7 +83,6 @@ function showRegisterForm() {
 
 // Event listeners for forms
 document.addEventListener('DOMContentLoaded', function() {
-    // Login form submission
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
@@ -94,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Register form submission
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', function(e) {
@@ -105,10 +103,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Check if user is already logged in
     const token = localStorage.getItem('token');
     if (token && window.location.pathname.endsWith('index.html')) {
         window.location.href = '/dashboard.html';
     }
 });
-                    
