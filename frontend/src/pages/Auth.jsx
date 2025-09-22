@@ -7,7 +7,7 @@ const API_BASE_URL = "https://devnest-ai.onrender.com";
 // Login function
 async function loginUser(email, password) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/login`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -33,7 +33,7 @@ async function loginUser(email, password) {
 // Register function
 async function registerUser(email, password) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/register`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
