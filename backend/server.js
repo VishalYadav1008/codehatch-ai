@@ -109,8 +109,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// 🚀 VERCEL COMPATIBILITY - YEH CHANGE KARO
-const PORT = process.env.PORT || 5000;
+
 
 // Vercel ke liye export (IMPORTANT)
 module.exports = app;
