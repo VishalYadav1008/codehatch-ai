@@ -353,21 +353,13 @@ app.get('/', (req, res) => {
 module.exports = app;
 
 // ✅ Sirf local development ke liye listen karo
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+// ✅ YEH LAST LINES HO NI CHAHIYE
+module.exports = app;
+
+// ✅ Sirf local development ke liye
+if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    const baseURL = `http://localhost:${PORT}`;
-    console.log(`
-╔══════════════════════════════════════════════════════╗
-║                                                      ║
-║   🚀 Devnest Server with Supabase                   ║
-║                                                      ║
-║   Server: ${baseURL}                                 ║
-║   Database: ${process.env.SUPABASE_URL ? '✅ Supabase' : '❌ None'}           ║
-║   AI: ${process.env.GROQ_API_KEY ? '✅ Groq API' : '❌ Disabled'}           ║
-║   Auth: ${process.env.JWT_SECRET ? '✅ JWT' : '❌ Disabled'}               ║
-║                                                      ║
-╚══════════════════════════════════════════════════════╝
-    `);
+    console.log(`🚀 Server running locally on http://localhost:${PORT}`);
   });
 }
