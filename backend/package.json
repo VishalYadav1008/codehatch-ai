@@ -6,8 +6,8 @@
   "scripts": {
     "build": "echo 'No build needed for backend' && exit 0",
     "vercel-build": "npm install",
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "start": "nserver.js",
+    "dev": "server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
