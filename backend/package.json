@@ -6,7 +6,7 @@
   "scripts": {
     "build": "echo 'No build needed for backend' && exit 0",
     "vercel-build": "npm install",
-    "start": "nserver.js",
+    "start": "server.js",
     "dev": "server.js"
   },
   "dependencies": {
