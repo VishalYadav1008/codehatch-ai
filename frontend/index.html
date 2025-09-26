@@ -3,104 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevNest AI</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>DevNest AI - Instant Coding Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .file-item.folder {
-            cursor: pointer;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .file-item.folder.open + .nested-files {
-            display: block;
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f23;
+            color: #ffffff;
+            overflow-x: hidden;
         }
-        .nested-files {
-            display: none;
-            margin-left: 20px;
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
         }
-        .tab.active {
-            background-color: #3b82f6;
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+        
+        .message-user {
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            border-radius: 18px 18px 4px 18px;
+            margin-left: 20%;
+        }
+        
+        .message-ai {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px 18px 18px 4px;
+            margin-right: 20%;
+        }
+        
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid #667eea;
+            white-space: nowrap;
+            animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #667eea; }
+        }
+        
+        .floating { 
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .code-block {
+            background: #1a1b26;
+            border: 1px solid #2a2b3d;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .pulse-ring {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 1; }
+            70% { transform: scale(1.2); opacity: 0; }
+            100% { transform: scale(0.8); opacity: 0; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="bg-white shadow-lg rounded-lg p-6 mb-8">
-            <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-gray-800">DevNest AI</h1>
-                <div class="flex space-x-4">
-                    <button id="loginBtn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">Login</button>
-                    <button id="signupBtn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">Sign Up</button>
-                </div>
-            </div>
-        </header>
+<body class="gradient-bg min-h-screen">
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse floating"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse floating" style="animation-delay: 2s;"></div>
+        <div class="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse floating" style="animation-delay: 4s;"></div>
+    </div>
 
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Sidebar -->
-            <div class="bg-white shadow-lg rounded-lg p-6">
-                <h2 class="text-xl font-semibold mb-4">File Explorer</h2>
-                <div class="file-explorer">
-                    <div class="file-item folder">
-                        <div class="flex items-center space-x-2">
-                            <div class="file-icon">
-                                <i class="fas fa-folder"></i>
+    <!-- Main Container -->
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-6xl h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="p-6 border-b border-white/10">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-robot text-2xl"></i>
                             </div>
-                            <span>Project Files</span>
+                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full pulse-ring"></div>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                DevNest AI
+                            </h1>
+                            <p class="text-sm text-white/60">Instant Coding Assistant - No Login Required</p>
                         </div>
                     </div>
-                    <div class="nested-files">
-                        <div class="file-item">
-                            <div class="flex items-center space-x-2">
-                                <div class="file-icon">
-                                    <i class="fas fa-file-code"></i>
-                                </div>
-                                <span>index.html</span>
-                            </div>
-                        </div>
-                        <div class="file-item">
-                            <div class="flex items-center space-x-2">
-                                <div class="file-icon">
-                                    <i class="fas fa-file-code"></i>
-                                </div>
-                                <span>style.css</span>
-                            </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="flex space-x-2">
+                            <button class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition duration-200">
+                                <i class="fas fa-sun mr-2"></i>Theme
+                            </button>
+                            <button class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition duration-200">
+                                <i class="fas fa-history mr-2"></i>History
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Center Content -->
-            <div class="bg-white shadow-lg rounded-lg p-6 lg:col-span-2">
-                <div class="flex space-x-4 mb-6">
-                    <div class="tab active px-4 py-2 rounded cursor-pointer">Chat</div>
-                    <div class="tab px-4 py-2 rounded cursor-pointer">Code</div>
-                    <div class="tab px-4 py-2 rounded cursor-pointer">Settings</div>
-                </div>
+            <!-- Main Content -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Sidebar -->
+                <div class="w-80 border-r border-white/10 p-6 hidden lg:block">
+                    <div class="space-y-6">
+                        <!-- Quick Actions -->
+                        <div>
+                            <h3 class="font-semibold text-white/80 mb-3">Quick Actions</h3>
+                            <div class="space-y-2">
+                                <button onclick="loadExample('react')" class="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-white/10 transition duration-200">
+                                    <i class="fab fa-react text-blue-400 mr-2"></i>React Component
+                                </button>
+                                <button onclick="loadExample('node')" class="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-white/10 transition duration-200">
+                                    <i class="fab fa-node-js text-green-400 mr-2"></i>API Route
+                                </button>
+                                <button onclick="loadExample('html')" class="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-white/10 transition duration-200">
+                                    <i class="fab fa-html5 text-orange-400 mr-2"></i>HTML Template
+                                </button>
+                            </div>
+                        </div>
 
-                <!-- Chat Interface -->
-                <div id="chatTab" class="tab-content">
-                    <div class="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto mb-4">
-                        <div class="message ai-message bg-white p-3 rounded-lg shadow mb-3">
-                            <strong>AI Assistant:</strong> Hello! How can I help you today?
+                        <!-- Code Templates -->
+                        <div>
+                            <h3 class="font-semibold text-white/80 mb-3">Templates</h3>
+                            <div class="space-y-2">
+                                <button onclick="loadTemplate('landing')" class="w-full text-left p-2 rounded-lg bg-white/5 hover:bg-white/10 transition">
+                                    🚀 Landing Page
+                                </button>
+                                <button onclick="loadTemplate('dashboard')" class="w-full text-left p-2 rounded-lg bg-white/5 hover:bg-white/10 transition">
+                                    📊 Dashboard
+                                </button>
+                                <button onclick="loadTemplate('auth')" class="w-full text-left p-2 rounded-lg bg-white/5 hover:bg-white/10 transition">
+                                    🔐 Auth System
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stats -->
+                        <div class="bg-white/5 rounded-lg p-4">
+                            <h3 class="font-semibold mb-2">Session Stats</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Messages:</span>
+                                    <span id="messageCount">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Code Generated:</span>
+                                    <span id="codeCount">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Time Saved:</span>
+                                    <span>~15 min</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex space-x-2">
-                        <input type="text" placeholder="Type your message..." class="flex-1 p-3 border rounded-lg">
-                        <button class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">Send</button>
-                    </div>
                 </div>
 
-                <!-- Login Modal -->
-                <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-                    <div class="bg-white p-8 rounded-lg w-96">
-                        <h3 class="text-2xl font-bold mb-4">Login</h3>
-                        <div class="space-y-4">
-                            <input type="email" id="loginEmail" placeholder="Email" class="w-full p-3 border rounded-lg">
-                            <input type="password" id="loginPassword" placeholder="Password" class="w-full p-3 border rounded-lg">
-                            <button id="submitLogin" class="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition">Login</button>
-                            <button id="closeLogin" class="w-full bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition">Cancel</button>
+                <!-- Chat Area -->
+                <div class="flex-1 flex flex-col">
+                    <!-- Messages Container -->
+                    <div id="messagesContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
+                        <!-- Welcome Message -->
+                        <div class="message-ai p-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-robot text-white text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold">DevNest AI</div>
+                                    <div class="mt-1 text-white/80">
+                                        <p>Hello! I'm your instant coding assistant. I can help you with:</p>
+                                        <ul class="list-disc list-inside mt-2 space-y-1">
+                                            <li>Writing code in multiple languages</li>
+                                            <li>Debugging and optimization</li>
+                                            <li>Code explanations</li>
+                                            <li>Project structure advice</li>
+                                        </ul>
+                                        <p class="mt-3">Just start typing your question below! 🚀</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="p-6 border-t border-white/10">
+                        <div class="flex space-x-4">
+                            <div class="flex-1 relative">
+                                <textarea 
+                                    id="messageInput"
+                                    rows="1"
+                                    placeholder="Ask me to write code, explain concepts, or help debug..."
+                                    class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 pr-12 resize-none focus:outline-none focus:border-white/30 transition duration-200"
+                                    oninput="autoResize(this)"
+                                ></textarea>
+                                <button onclick="sendMessage()" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center hover:scale-110 transition duration-200">
+                                    <i class="fas fa-paper-plane text-white"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Suggestions -->
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <button onclick="quickPrompt('Create a React login component')" class="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-sm transition">
+                                React Login
+                            </button>
+                            <button onclick="quickPrompt('How to optimize SQL queries?')" class="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-sm transition">
+                                SQL Optimization
+                            </button>
+                            <button onclick="quickPrompt('Python Flask API example')" class="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-sm transition">
+                                Flask API
+                            </button>
+                            <button onclick="quickPrompt('Explain async/await in JavaScript')" class="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-sm transition">
+                                Async/Await
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -109,186 +265,174 @@
     </div>
 
     <script>
-        // Check authentication status on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-            setupEventListeners();
+        // Supabase Configuration
+        const supabaseUrl = https://dpkhytntovdupyppkgdc.supabase.co;
+        const supabaseKey = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg;
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let messageCount = 0;
+        let codeCount = 0;
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function quickPrompt(prompt) {
+            document.getElementById('messageInput').value = prompt;
+            sendMessage();
+        }
+
+        function loadExample(type) {
+            const examples = {
+                react: "Create a modern React component for a user profile card with Tailwind CSS",
+                node: "Write a Node.js Express API endpoint for user registration with validation",
+                html: "Create a responsive HTML5 landing page for a SaaS product"
+            };
+            quickPrompt(examples[type]);
+        }
+
+        function loadTemplate(template) {
+            const templates = {
+                landing: "Generate a complete landing page HTML template with CSS and JavaScript",
+                dashboard: "Create an admin dashboard UI with charts and statistics",
+                auth: "Build a complete authentication system with login, register, and forgot password"
+            };
+            quickPrompt(templates[template]);
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            autoResize(input);
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Simulate AI response (Replace with actual Supabase call)
+                const response = await simulateAIResponse(message);
+                
+                // Remove typing indicator
+                removeTypingIndicator();
+                
+                // Add AI response
+                addMessage('ai', response);
+                
+                // Update stats
+                updateStats();
+
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage('ai', 'Sorry, I encountered an error. Please try again.');
+            }
+        }
+
+        function simulateAIResponse(message) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const responses = [
+                        `Here's the code you requested:\n\n\`\`\`jsx\nfunction ExampleComponent() {\n  return (\n    <div className=\"p-4\">\n      <h1>Hello World</h1>\n    </div>\n  );\n}\n\`\`\``,
+                        
+                        `I'll help you with that! The solution involves:\n\n1. First, set up the basic structure\n2. Then add the functionality\n3. Finally, test and optimize\n\nWould you like me to elaborate on any specific part?`,
+                        
+                        `Great question! Here's a detailed explanation:\n\n- **Concept**: This pattern helps with...\n- **Implementation**: You can implement it by...\n- **Best Practices**: Remember to always...`,
+                        
+                        `Let me create that for you. The key components are:\n\n- Responsive design\n- Modern UI patterns\n- Accessibility features\n- Performance optimization`
+                    ];
+                    
+                    resolve(responses[Math.floor(Math.random() * responses.length)]);
+                }, 2000);
+            });
+        }
+
+        function addMessage(sender, content) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            
+            messageDiv.className = sender === 'user' ? 'message-user' : 'message-ai';
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        sender === 'user' ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gradient-to-r from-green-400 to-blue-500'
+                    }">
+                        <i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'} text-white text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-semibold">${sender === 'user' ? 'You' : 'DevNest AI'}</div>
+                        <div class="mt-1 text-white/80 whitespace-pre-wrap">${formatMessage(content)}</div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            messageCount++;
+        }
+
+        function formatMessage(content) {
+            // Simple markdown-like formatting
+            return content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\`\`\`([^]+?)\`\`\`/g, '<div class="code-block p-3 mt-2 rounded"><code>$1</code></div>')
+                .replace(/\`(.*?)\`/g, '<code class="bg-white/10 px-1 rounded">$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function showTypingIndicator() {
+            const container = document.getElementById('messagesContainer');
+            const indicator = document.createElement('div');
+            indicator.id = 'typingIndicator';
+            indicator.className = 'message-ai p-4';
+            indicator.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-semibold">DevNest AI</div>
+                        <div class="mt-1 text-white/80">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce"></div>
+                                <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(indicator);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('messageCount').textContent = messageCount;
+            document.getElementById('codeCount').textContent = codeCount;
+        }
+
+        // Enter key to send message
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
         });
 
-        // Check if user is already logged in
-        function checkAuthStatus() {
-            const token = localStorage.getItem('token');
-            const user = localStorage.getItem('user');
-            
-            if (token && user) {
-                // User is logged in, update UI
-                updateUIForLoggedInUser(JSON.parse(user));
-            }
-        }
-
-        // Update UI when user is logged in
-        function updateUIForLoggedInUser(user) {
-            const loginBtn = document.getElementById('loginBtn');
-            const signupBtn = document.getElementById('signupBtn');
-            
-            loginBtn.textContent = `Welcome, ${user.name}`;
-            signupBtn.textContent = 'Logout';
-            signupBtn.onclick = logout;
-        }
-
-        // Logout function
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            location.reload();
-        }
-
-        // Setup all event listeners
-        function setupEventListeners() {
-            // Folder toggle functionality
-            const folders = document.querySelectorAll('.file-item.folder');
-            folders.forEach(folder => {
-                folder.addEventListener('click', function(e) {
-                    if (e.target !== this && !e.target.classList.contains('action-btn')) {
-                        return;
-                    }
-                    this.classList.toggle('open');
-                    const icon = this.querySelector('.file-icon i');
-                    if (this.classList.contains('open')) {
-                        icon.classList.remove('fa-folder');
-                        icon.classList.add('fa-folder-open');
-                    } else {
-                        icon.classList.remove('fa-folder-open');
-                        icon.classList.add('fa-folder');
-                    }
-                });
-            });
-            
-            // Tab switching functionality
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            // Login modal functionality
-            const loginBtn = document.getElementById('loginBtn');
-            const signupBtn = document.getElementById('signupBtn');
-            const loginModal = document.getElementById('loginModal');
-            const closeLogin = document.getElementById('closeLogin');
-            const submitLogin = document.getElementById('submitLogin');
-
-            // Only setup login if user is not already logged in
-            if (!localStorage.getItem('token')) {
-                loginBtn.addEventListener('click', function() {
-                    loginModal.classList.remove('hidden');
-                });
-
-                signupBtn.addEventListener('click', function() {
-                    // For demo, same as login
-                    loginModal.classList.remove('hidden');
-                });
-
-                closeLogin.addEventListener('click', function() {
-                    loginModal.classList.add('hidden');
-                });
-
-                // Actual login functionality
-                submitLogin.addEventListener('click', async function() {
-                    const email = document.getElementById('loginEmail').value;
-                    const password = document.getElementById('loginPassword').value;
-                    
-                    if (!email || !password) {
-                        alert('Please enter both email and password');
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch('https://devnest-ai.onrender.com/api/auth/login', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ email, password })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (response.ok) {
-                            // Save token and user data
-                            localStorage.setItem('token', data.token);
-                            localStorage.setItem('user', JSON.stringify(data.user));
-                            
-                            // Close modal and update UI
-                            loginModal.classList.add('hidden');
-                            updateUIForLoggedInUser(data.user);
-                            
-                            alert('Login successful!');
-                        } else {
-                            alert('Login failed: ' + (data.message || 'Invalid credentials'));
-                        }
-                    } catch (error) {
-                        alert('Login error: ' + error.message);
-                    }
-                });
-            }
-
-            // Chat functionality
-            const chatInput = document.querySelector('#chatTab input');
-            const chatSendBtn = document.querySelector('#chatTab button');
-
-            chatSendBtn.addEventListener('click', async function() {
-                const message = chatInput.value.trim();
-                if (!message) return;
-
-                // Add user message to chat
-                addMessageToChat('user', message);
-                chatInput.value = '';
-
-                try {
-                    // Send message to backend
-                    const token = localStorage.getItem('token');
-                    
-                    const response = await fetch('https://devnest-ai.onrender.com/api/chat', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': token ? `Bearer ${token}` : ''
-                        },
-                        body: JSON.stringify({ message })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        addMessageToChat('ai', data.response);
-                    } else {
-                        addMessageToChat('ai', 'Error: ' + (data.message || 'Failed to get response'));
-                    }
-                } catch (error) {
-                    addMessageToChat('ai', 'Error: ' + error.message);
-                }
-            });
-
-            // Allow sending message with Enter key
-            chatInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    chatSendBtn.click();
-                }
-            });
-        }
-
-        // Add message to chat interface
-        function addMessageToChat(sender, message) {
-            const chatContainer = document.querySelector('#chatTab .bg-gray-50');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message bg-white p-3 rounded-lg shadow mb-3`;
-            messageDiv.innerHTML = `<strong>${sender === 'user' ? 'You' : 'AI Assistant'}:</strong> ${message}`;
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+        // Initial focus
+        document.getElementById('messageInput').focus();
     </script>
 </body>
 </html>
