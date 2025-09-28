@@ -1,80 +1,40 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const jwt = require('jsonwebtoken');
-const supabase = require('./config/supabase');
+const { createClient } = require('@supabase/supabase-js');
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 
-// ✅ Fix CORS middleware
-// ✅ CORS ko yeh banao:
+// CORS Configuration
 app.use(cors({
-  origin: ['https://devnest-ai.vercel.app', 'http://localhost:3000'],
+  origin: '*',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 app.use(express.json());
 
-// Debug info
-console.log('🚀 Supabase Integration Status:');
-console.log('✅ Supabase URL:', process.env.SUPABASE_URL ? 'Configured' : 'Not configured');
-console.log('✅ Supabase Anon Key:', process.env.SUPABASE_ANON_KEY ? 'Configured' : 'Not configured');
-console.log('✅ JWT Secret:', process.env.JWT_SECRET ? 'Configured' : 'Not configured');
-console.log('✅ Groq API:', process.env.GROQ_API_KEY ? 'Configured' : 'Not configured');
+// ✅ Use .env variables
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// JWT Authentication Middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+console.log('🚀 Supabase Status:', supabaseUrl ? 'Connected' : 'Not Configured');
 
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Access token required'
-    });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({
-        success: false,
-        message: 'Invalid or expired token'
-      });
-    }
-    req.user = user;
-    next();
-  });
-};
-
-// 🌐 Health check endpoint
+// Health check
 app.get('/api/health', async (req, res) => {
   try {
-    let dbStatus = '✅ Connected';
-    let dbError = null;
+    // Test Supabase connection
+    const { data, error } = await supabase.from('users').select('count').limit(1);
     
-    if (process.env.SUPABASE_URL) {
-      const { error } = await supabase.from('users').select('count').limit(1);
-      if (error) {
-        dbStatus = '❌ Error';
-        dbError = error.message;
-      }
-    }
-
     res.json({
       success: true,
-      message: 'Devnest Server Running with Supabase!',
-      timestamp: new Date().toISOString(),
-      database: { status: dbStatus, error: dbError },
-      services: {
-        supabase: !!process.env.SUPABASE_URL,
-        groq: !!process.env.GROQ_API_KEY,
-        jwt: !!process.env.JWT_SECRET
-      }
+      message: '🚀 DevNest Backend Running!',
+      database: error ? 'Connection Failed' : 'Supabase Connected',
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({
@@ -85,282 +45,179 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// 🔵 Registration endpoint
-app.post('/api/auth/register', async (req, res) => {
+// Chat endpoint
+app.post('/api/chat', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { message, userId } = req.body;
     
-    // Basic validation
-    if (!email || !password || !name) {
+    if (!message) {
       return res.status(400).json({
         success: false,
-        message: 'Email, password, and name are required'
+        message: 'Message is required'
       });
     }
 
-    // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
+    console.log('📨 Received message:', message);
 
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email'
-      });
-    }
+    // AI Response
+    const aiResponse = generateAIResponse(message);
 
-    // Create user in Supabase
-    const { data: user, error: createError } = await supabase
-      .from('users')
-      .insert([
-        {
-          email: email,
-          password: password, // In real app, hash this password
-          name: name,
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
+    // Save to Supabase
+    try {
+      const { data, error } = await supabase
+        .from('chats')
+        .insert([{
+          user_id: userId || 'anonymous',
+          prompt: message,
+          response: aiResponse,
+          created_at: new Date()
+        }])
+        .select();
 
-    if (createError) {
-      throw createError;
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name
-        },
-        token: token
+      if (error) {
+        console.log('Database save error:', error.message);
+      } else {
+        console.log('✅ Chat saved to Supabase');
       }
-    });
-
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Registration failed',
-      error: error.message
-    });
-  }
-});
-
-// 🔵 Login endpoint
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required'
-      });
-    }
-
-    // Find user in Supabase
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password) // In real app, use hashed password comparison
-      .single();
-
-    if (error || !user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      success: true,
-      message: 'Login successful',
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name
-        },
-        token: token
-      }
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Login failed',
-      error: error.message
-    });
-  }
-});
-
-// 🔵 Profile endpoint (protected)
-app.get('/api/auth/profile', authenticateToken, async (req, res) => {
-  try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, email, name, created_at')
-      .eq('id', req.user.userId)
-      .single();
-
-    if (error || !user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+    } catch (dbError) {
+      console.log('Database connection failed');
     }
 
     res.json({
       success: true,
-      data: { user }
+      response: aiResponse,
+      message: "AI response generated successfully"
     });
 
   } catch (error) {
-    console.error('Profile error:', error);
+    console.error('Chat error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch profile',
+      message: 'Chat failed',
       error: error.message
     });
   }
 });
 
-// 🤖 AI Chat endpoint (protected)
-app.post('/api/ai/chat', authenticateToken, async (req, res) => {
-  try {
-    const { prompt } = req.body;
-    
-    if (!prompt) {
-      return res.status(400).json({
-        success: false,
-        message: 'Prompt is required'
-      });
-    }
+// AI Response Generator
+function generateAIResponse(message) {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('react') || lowerMessage.includes('component')) {
+    return `**React Component Created!** 🚀\n\n\`\`\`jsx
+import React from 'react';
 
-    // Save chat to Supabase
-    const { data: chat, error: chatError } = await supabase
-      .from('chats')
-      .insert([
-        {
-          user_id: req.user.userId,
-          prompt: prompt,
-          response: 'AI response will be implemented with Groq API',
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
+function ${getComponentName(message)}() {
+  return (
+    <div className="p-6 bg-white rounded-lg shadow-lg">
+      <h1 className="text-2xl font-bold text-gray-800">
+        Welcome to React!
+      </h1>
+      <p className="text-gray-600 mt-2">
+        Start building amazing components!
+      </p>
+    </div>
+  );
+}
 
-    if (chatError) {
-      throw chatError;
-    }
-
-    // TODO: Integrate Groq API here
-    const aiResponse = "Groq API integration will be implemented soon";
-
-    res.json({
-      success: true,
-      data: {
-        prompt: prompt,
-        response: aiResponse,
-        chatId: chat.id
-      }
-    });
-
-  } catch (error) {
-    console.error('AI chat error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'AI chat failed',
-      error: error.message
-    });
+export default ${getComponentName(message)};
+\`\`\``;
   }
-});
+  else if (lowerMessage.includes('css') || lowerMessage.includes('style')) {
+    return `**CSS Solution** 🎨\n\n\`\`\`css
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
 
-// 📜 Chat History endpoint (protected)
-app.get('/api/chats/history', authenticateToken, async (req, res) => {
-  try {
-    const { data: chats, error } = await supabase
-      .from('chats')
-      .select('*')
-      .eq('user_id', req.user.userId)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (error) {
-      throw error;
-    }
-
-    res.json({
-      success: true,
-      data: { chats: chats || [] }
-    });
-
-  } catch (error) {
-    console.error('Chat history error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch chat history',
-      error: error.message
-    });
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+\`\`\``;
   }
-});
+  else if (lowerMessage.includes('javascript') || lowerMessage.includes('js')) {
+    return `**JavaScript Code** ⚡\n\n\`\`\`javascript
+// Modern JavaScript
+const ${getFunctionName(message)} = () => {
+  console.log('Hello JavaScript!');
+  
+  // Async example
+  const fetchData = async () => {
+    try {
+      const response = await fetch('/api/data');
+      return await response.json();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+  
+  return 'Code executed successfully!';
+};
+
+${getFunctionName(message)}();
+\`\`\``;
+  }
+  else if (lowerMessage.includes('html')) {
+    return `**HTML Template** 📄\n\n\`\`\`html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevNest Template</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">🚀 Welcome!</h1>
+        <p class="text-gray-600">Your HTML template is ready.</p>
+    </div>
+</body>
+</html>
+\`\`\``;
+  }
+  else {
+    return `**Hello! I'm DevNest AI** 🤖\n\nI can help you with:\n\n• **React Components** - "Create a login form"\n• **CSS Styling** - "Center a div with CSS"\n• **JavaScript** - "Write API call code"\n• **HTML Templates** - "Create landing page"\n\nWhat would you like to build today? 💡`;
+  }
+}
+
+function getComponentName(message) {
+  const match = message.match(/create.*component.*for\s+(\w+)/i) || 
+                message.match(/component.*for\s+(\w+)/i);
+  return match ? match[1] + 'Component' : 'MyComponent';
+}
+
+function getFunctionName(message) {
+  const match = message.match(/function.*for\s+(\w+)/i) || 
+                message.match(/create.*function.*(\w+)/i);
+  return match ? match[1] : 'myFunction';
+}
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: '🚀 Devnest Backend API with Supabase',
+    message: '🚀 DevNest Backend API',
     version: '1.0.0',
     endpoints: {
-      health: '/api/health',
-      register: '/api/auth/register (POST)',
-      login: '/api/auth/login (POST)',
-      profile: '/api/auth/profile (GET) - requires auth',
-      aiChat: '/api/ai/chat (POST) - requires auth',
-      chatHistory: '/api/chats/history (GET) - requires auth'
+      health: 'GET /api/health',
+      chat: 'POST /api/chat'
     },
-    database: {
-      supabase: !!process.env.SUPABASE_URL,
-      status: process.env.SUPABASE_URL ? 'Connected' : 'Not configured'
-    }
+    database: 'Supabase via .env'
   });
 });
 
-// ✅ Vercel ke liye export (IMPORTANT)
-module.exports = app;
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Health: http://localhost:${PORT}/api/health`);
+});
 
-// ✅ Sirf local development ke liye listen karo
-// ✅ YEH LAST LINES HO NI CHAHIYE
 module.exports = app;
-
-// ✅ Sirf local development ke liye
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running locally on http://localhost:${PORT}`);
-  });
-}
