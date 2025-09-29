@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevNest AI - Your Coding Companion</title>
+    <title>DevNest AI - Coding Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -15,41 +15,29 @@
             color: #e2e8f0;
             min-height: 100vh;
         }
-        .main-container {
-            display: flex;
+        .mobile-container {
             height: 100vh;
-            max-width: 1400px;
-            margin: 0 auto;
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
         }
         .message-user {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             border-radius: 18px 18px 4px 18px;
-            animation: slideIn 0.3s ease-out;
+            margin-left: 20%;
+            max-width: 90%;
         }
         .message-ai {
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 18px 18px 18px 4px;
-            animation: slideIn 0.3s ease-out;
+            margin-right: 20%;
+            max-width: 90%;
         }
         .typing-indicator span {
             animation: bounce 1.4s infinite ease-in-out both;
         }
         .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes slideIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px) scale(0.95); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
-        }
         @keyframes bounce {
             0%, 80%, 100% { 
                 transform: scale(0.8);
@@ -60,247 +48,281 @@
                 opacity: 1;
             }
         }
-        .sidebar-item {
+        .mobile-tab {
             transition: all 0.2s ease;
         }
-        .sidebar-item:hover {
+        .mobile-tab.active {
             background: #374151;
-            transform: translateX(4px);
-        }
-        .code-block {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            font-family: 'Fira Code', monospace;
+            border-color: #6366f1;
         }
         [x-cloak] { display: none !important; }
+        
+        /* Mobile First Design */
         @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-                height: auto;
-                min-height: 100vh;
+            .message-user, .message-ai {
+                margin-left: 10% !important;
+                margin-right: 10% !important;
+                max-width: 85% !important;
+                padding: 12px !important;
+            }
+            .mobile-text-sm {
+                font-size: 14px !important;
+            }
+            .mobile-padding {
+                padding: 12px !important;
+            }
+            .mobile-input {
+                padding: 12px !important;
+                font-size: 16px !important;
             }
         }
     </style>
 </head>
-<body class="p-2 md:p-4 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+<body class="bg-slate-900">
     <div x-data="{ 
-        loggedIn: false, 
-        username: 'Developer',
-        activeChat: 'general',
+        activeTab: 'chat',
+        loggedIn: false,
         showLoginModal: false,
-        chats: [
-            { id: 'general', name: 'General Coding', lastMessage: 'Hello! How can I help?' },
-            { id: 'react', name: 'React Project', lastMessage: 'Component structure...' },
-            { id: 'python', name: 'Python Script', lastMessage: 'Debugging help...' }
-        ]
-    }" class="main-container">
-        <!-- Sidebar -->
-        <div class="bg-slate-900 w-full md:w-80 flex flex-col">
-            <div class="p-6 border-b border-slate-700">
+        username: 'Developer'
+    }" class="mobile-container">
+        
+        <!-- Header - Mobile Optimized -->
+        <div class="bg-slate-800 border-b border-slate-700 p-4 mobile-padding">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-code text-xl text-white"></i>
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-code text-white text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">DevNest AI</h1>
-                        <p class="text-slate-400 text-sm">Your Coding Companion</p>
+                        <h1 class="text-lg font-bold text-white mobile-text-sm">DevNest AI</h1>
+                        <p class="text-slate-400 text-xs">Coding Assistant</p>
                     </div>
                 </div>
+                <div class="flex items-center space-x-2">
+                    <template x-if="!loggedIn">
+                        <span class="text-xs text-orange-400 bg-orange-400/20 px-2 py-1 rounded">Guest</span>
+                    </template>
+                    <template x-if="loggedIn">
+                        <span class="text-xs text-green-400 bg-green-400/20 px-2 py-1 rounded">
+                            <i class="fas fa-user-check mr-1"></i>
+                            <span x-text="username"></span>
+                        </span>
+                    </template>
+                </div>
             </div>
+        </div>
 
-            <div class="flex-1 p-4 space-y-2">
-                <button class="w-full text-left p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all duration-200 flex items-center space-x-3 group">
-                    <i class="fas fa-plus text-blue-400 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold">New Chat</span>
+        <!-- Tabs - Mobile Navigation -->
+        <div class="bg-slate-800 border-b border-slate-700 p-2 mobile-padding">
+            <div class="flex space-x-1">
+                <button 
+                    @click="activeTab = 'chat'" 
+                    :class="activeTab === 'chat' ? 'mobile-tab active text-white border-blue-500' : 'mobile-tab text-slate-400 border-transparent'"
+                    class="flex-1 py-2 px-2 rounded-lg border text-sm font-medium transition mobile-text-sm"
+                >
+                    <i class="fas fa-comments mr-1"></i> Chat
                 </button>
-                
-                <div class="mt-6">
-                    <h3 class="text-slate-500 text-sm font-semibold mb-3 px-2">Recent Chats</h3>
-                    <div class="space-y-1">
-                        <template x-for="chat in chats" :key="chat.id">
-                            <div 
-                                @click="activeChat = chat.id"
-                                :class="activeChat === chat.id ? 'bg-slate-800 border-blue-500/30' : 'bg-slate-800/50 border-transparent'"
-                                class="sidebar-item p-3 rounded-lg border cursor-pointer transition-all duration-200"
+                <button 
+                    @click="activeTab = 'history'" 
+                    :class="activeTab === 'history' ? 'mobile-tab active text-white border-blue-500' : 'mobile-tab text-slate-400 border-transparent'"
+                    class="flex-1 py-2 px-2 rounded-lg border text-sm font-medium transition mobile-text-sm"
+                >
+                    <i class="fas fa-history mr-1"></i> History
+                </button>
+                <button 
+                    @click="activeTab = 'login'" 
+                    :class="activeTab === 'login' ? 'mobile-tab active text-white border-blue-500' : 'mobile-tab text-slate-400 border-transparent'"
+                    class="flex-1 py-2 px-2 rounded-lg border text-sm font-medium transition mobile-text-sm"
+                >
+                    <i class="fas fa-user mr-1"></i> Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 overflow-hidden">
+            <!-- Chat Tab -->
+            <template x-if="activeTab === 'chat'">
+                <div class="h-full flex flex-col">
+                    <!-- Messages Area -->
+                    <div id="messages" class="flex-1 overflow-y-auto p-3 space-y-3 mobile-padding">
+                        <!-- Welcome Message -->
+                        <div class="message-ai">
+                            <div class="flex items-start space-x-2">
+                                <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-robot text-white text-xs"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-blue-300 text-sm mb-1">DevNest AI</div>
+                                    <div class="text-slate-200 text-sm leading-relaxed">
+                                        <p class="mb-2">Hello! I'm your mobile coding assistant. I can help you with:</p>
+                                        <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                                            <li>React, JavaScript, Python code</li>
+                                            <li>Debugging and explanations</li>
+                                            <li>Code optimization</li>
+                                        </ul>
+                                        <p class="mt-2 text-xs">Try the quick actions below! 👇</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions - Mobile Optimized -->
+                    <div class="p-3 border-t border-slate-700 mobile-padding">
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button onclick="quickAction('Create React component')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fab fa-react text-blue-400 mb-1 block"></i>
+                                React
+                            </button>
+                            <button onclick="quickAction('Python function')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fab fa-python text-green-400 mb-1 block"></i>
+                                Python
+                            </button>
+                            <button onclick="quickAction('CSS help')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fab fa-css3-alt text-orange-400 mb-1 block"></i>
+                                CSS
+                            </button>
+                            <button onclick="quickAction('JavaScript code')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fab fa-js-square text-yellow-400 mb-1 block"></i>
+                                JS
+                            </button>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="flex space-x-2">
+                            <div class="flex-1 relative">
+                                <input 
+                                    type="text" 
+                                    id="messageInput"
+                                    placeholder="Ask about code..."
+                                    class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 mobile-input focus:outline-none focus:border-blue-500 text-sm"
+                                >
+                                <button onclick="sendMessage()" class="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-paper-plane text-white text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- History Tab -->
+            <template x-if="activeTab === 'history'">
+                <div class="h-full p-4 mobile-padding">
+                    <template x-if="!loggedIn">
+                        <div class="text-center h-full flex flex-col items-center justify-center">
+                            <i class="fas fa-history text-4xl mb-4 text-slate-500"></i>
+                            <h3 class="text-lg font-semibold text-slate-300 mb-2">Chat History</h3>
+                            <p class="text-slate-400 text-sm mb-4">Login to save and view your chat history</p>
+                            <button 
+                                @click="activeTab = 'login'" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition font-medium"
                             >
-                                <div class="font-medium text-slate-200" x-text="chat.name"></div>
-                                <div class="text-slate-400 text-sm truncate" x-text="chat.lastMessage"></div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="mt-8">
-                    <h3 class="text-slate-500 text-sm font-semibold mb-3 px-2">Quick Start</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button @click="quickAction('Create a React component')" class="p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700 transition text-xs text-center">
-                            <i class="fab fa-react text-blue-400 mb-1 block text-sm"></i>
-                            React
-                        </button>
-                        <button @click="quickAction('Python function example')" class="p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700 transition text-xs text-center">
-                            <i class="fab fa-python text-green-400 mb-1 block text-sm"></i>
-                            Python
-                        </button>
-                        <button @click="quickAction('CSS layout help')" class="p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700 transition text-xs text-center">
-                            <i class="fab fa-css3-alt text-orange-400 mb-1 block text-sm"></i>
-                            CSS
-                        </button>
-                        <button @click="quickAction('JavaScript explanation')" class="p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700 transition text-xs text-center">
-                            <i class="fab fa-js-square text-yellow-400 mb-1 block text-sm"></i>
-                            JS
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- LOGIN SECTION - YAHAN HAI -->
-            <div class="p-4 border-t border-slate-700 bg-slate-800/50">
-                <template x-if="!loggedIn">
-                    <div class="text-center space-y-3">
-                        <div class="flex items-center justify-center space-x-2 text-amber-400">
-                            <i class="fas fa-crown"></i>
-                            <span class="text-sm font-semibold">Pro Features</span>
+                                <i class="fas fa-sign-in-alt mr-2"></i>Go to Login
+                            </button>
                         </div>
-                        <button 
-                            @click="showLoginModal = true" 
-                            class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105"
-                        >
-                            <i class="fas fa-sign-in-alt text-lg"></i>
-                            <span class="text-lg">Login to Save History</span>
-                        </button>
-                        <p class="text-xs text-slate-400">Save chat history • Export code • Priority support</p>
-                    </div>
-                </template>
-                <template x-if="loggedIn">
-                    <div class="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                                <i class="fas fa-user-check text-white text-sm"></i>
+                    </template>
+                    <template x-if="loggedIn">
+                        <div class="space-y-3">
+                            <h3 class="text-lg font-semibold text-white mb-4">Your Chat History</h3>
+                            <div class="bg-slate-800 rounded-lg p-3 border border-slate-700">
+                                <div class="font-medium text-white">React Components</div>
+                                <div class="text-slate-400 text-sm">Yesterday - 5 messages</div>
                             </div>
-                            <div>
-                                <div class="font-semibold text-white" x-text="username"></div>
-                                <p class="text-sm text-green-400">✓ Logged In</p>
+                            <div class="bg-slate-800 rounded-lg p-3 border border-slate-700">
+                                <div class="font-medium text-white">Python Debugging</div>
+                                <div class="text-slate-400 text-sm">2 days ago - 3 messages</div>
                             </div>
                         </div>
-                        <button @click="loggedIn = false" class="text-slate-400 hover:text-red-400 transition">
-                            <i class="fas fa-sign-out-alt text-lg"></i>
-                        </button>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Main Chat Area -->
-        <div class="flex-1 flex flex-col bg-slate-800/50 backdrop-blur-sm">
-            <div class="p-6 border-b border-slate-700 flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-robot text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-white" x-text="chats.find(c => c.id === activeChat)?.name"></h2>
-                        <p class="text-slate-400">Always ready to help with your code</p>
-                    </div>
+                    </template>
                 </div>
-                <div class="flex items-center space-x-2 text-slate-400">
-                    <i class="fas fa-circle text-green-400 text-sm"></i>
-                    <span class="text-sm">Online</span>
-                </div>
-            </div>
+            </template>
 
-            <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6">
-                <div class="message-ai p-6 max-w-[85%]">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-green-400 to-blue-500 shadow-lg">
-                            <i class="fas fa-robot text-white text-sm"></i>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-semibold text-blue-300 mb-2">DevNest AI</div>
-                            <div class="text-slate-200 leading-relaxed">
-                                <p class="mb-3">Hello! I'm your AI coding companion. I can help you with:</p>
-                                <ul class="list-disc list-inside space-y-1 text-slate-300 mb-4">
-                                    <li>Writing and debugging code</li>
-                                    <li>Explaining programming concepts</li>
-                                    <li>Code optimization and best practices</li>
-                                    <li>Project architecture advice</li>
-                                </ul>
-                                <p>What would you like to work on today? 🚀</p>
+            <!-- Login/Account Tab -->
+            <template x-if="activeTab === 'login'">
+                <div class="h-full p-4 mobile-padding">
+                    <template x-if="!loggedIn">
+                        <div class="text-center h-full flex flex-col justify-center">
+                            <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <i class="fas fa-user-lock text-white text-2xl"></i>
+                            </div>
+                            
+                            <h3 class="text-xl font-bold text-white mb-2">Welcome to DevNest AI</h3>
+                            <p class="text-slate-400 text-sm mb-6">Login to unlock all features</p>
+
+                            <div class="space-y-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-2 text-left">Email</label>
+                                    <input type="email" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="your@email.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-2 text-left">Password</label>
+                                    <input type="password" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="••••••••">
+                                </div>
+                            </div>
+
+                            <button 
+                                @click="loggedIn = true; username = 'Mobile User';" 
+                                class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition mb-4"
+                            >
+                                Sign In
+                            </button>
+
+                            <div class="text-center">
+                                <button class="text-slate-400 hover:text-white text-sm transition">
+                                    Don't have an account? <span class="text-blue-400 hover:text-blue-300">Sign up</span>
+                                </button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </template>
 
-            <div class="p-6 border-t border-slate-700">
-                <div class="flex space-x-4">
-                    <div class="flex-1 relative">
-                        <input 
-                            type="text" 
-                            id="messageInput"
-                            placeholder="Ask about React, Python, JavaScript, CSS..."
-                            class="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-6 py-4 pr-12 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 placeholder-slate-400"
-                        >
-                        <button onclick="sendMessage()" class="absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hover:scale-110 transition-all duration-200 shadow-lg">
-                            <i class="fas fa-paper-plane text-white text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="flex flex-wrap gap-2 mt-4">
-                    <button onclick="quickAction('Create a React login component')" class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600 rounded-lg text-sm transition border border-slate-600">
-                        React Component
-                    </button>
-                    <button onclick="quickAction('Python Flask API setup')" class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600 rounded-lg text-sm transition border border-slate-600">
-                        Flask API
-                    </button>
-                    <button onclick="quickAction('CSS Grid layout example')" class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600 rounded-lg text-sm transition border border-slate-600">
-                        CSS Grid
-                    </button>
-                    <button onclick="quickAction('JavaScript async/await')" class="px-3 py-2 bg-slate-700/50 hover:bg-slate-600 rounded-lg text-sm transition border border-slate-600">
-                        Async/Await
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <template x-if="loggedIn">
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-user-check text-white text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-white" x-text="username"></h3>
+                                <p class="text-green-400 text-sm">✓ Logged In</p>
+                            </div>
 
-    <!-- LOGIN MODAL -->
-    <div x-show="showLoginModal" x-cloak class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-slate-800 rounded-2xl p-8 w-full max-w-md border border-slate-600 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-lock text-white text-2xl"></i>
+                            <div class="space-y-3">
+                                <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-white">Account Type</div>
+                                            <div class="text-slate-400 text-sm">Free Plan</div>
+                                        </div>
+                                        <i class="fas fa-crown text-yellow-400"></i>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                                    <div class="font-medium text-white mb-2">Usage Stats</div>
+                                    <div class="text-slate-400 text-sm space-y-1">
+                                        <div class="flex justify-between">
+                                            <span>Chats Today:</span>
+                                            <span>12</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>Code Generated:</span>
+                                            <span>8 files</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button 
+                                @click="loggedIn = false" 
+                                class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 py-3 rounded-lg transition font-medium"
+                            >
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </template>
                 </div>
-                <h3 class="text-2xl font-bold text-white">Welcome to DevNest AI</h3>
-                <p class="text-slate-400 mt-2">Login to unlock all features</p>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                    <input type="email" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="your@email.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                    <input type="password" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="••••••••">
-                </div>
-                
-                <button @click="loggedIn = true; showLoginModal = false; username = 'Logged User';" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition transform hover:scale-105">
-                    Sign In
-                </button>
-                
-                <div class="text-center">
-                    <button class="text-slate-400 hover:text-white text-sm transition">
-                        Don't have an account? <span class="text-blue-400 hover:text-blue-300">Sign up</span>
-                    </button>
-                </div>
-            </div>
-            
-            <button @click="showLoginModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+            </template>
         </div>
     </div>
 
@@ -326,7 +348,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ 
                         message: message,
-                        userId: 'devnest-user-' + Date.now()
+                        userId: 'mobile-user-' + Date.now()
                     })
                 });
 
@@ -340,87 +362,28 @@
 
             } catch (error) {
                 hideTyping();
-                // Smart fallback responses
                 const responses = {
-                    'react': `Here's a modern React component:\n\n\`\`\`jsx
-import { useState } from 'react';
-
-export default function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    // Add your login logic here
-    console.log({ email, password });
-  };
-
+                    'react': `Mobile React component:\n\n\`\`\`jsx
+function MobileComponent() {
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Welcome Back</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold"
-        >
-          Sign In
-        </button>
-      </form>
+    <div className="p-4">
+      <h1 className="text-xl font-bold">Hello Mobile!</h1>
     </div>
   );
 }
 \`\`\``,
-                    'python': `Here's a Python Flask API setup:\n\n\`\`\`python
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-
-app = Flask(__name__)
-CORS(app)
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    return jsonify({"status": "healthy", "message": "DevNest AI is running!"})
-
-@app.route('/api/chat', methods=['POST'])
-def chat_endpoint():
-    data = request.get_json()
-    user_message = data.get('message', '')
-    
-    # Add your AI logic here
-    response = f"Received: {user_message}"
-    
-    return jsonify({
-        "response": response,
-        "status": "success"
-    })
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+                    'python': `Python for mobile:\n\n\`\`\`python
+def mobile_function():
+    return "Hello from Python!"
 \`\`\``,
-                    'default': `I'd love to help you with that! 🚀\n\nFor the best assistance, please:\n- Be specific about your programming language\n- Share any error messages you're seeing\n- Describe what you're trying to achieve\n\nOr try one of the quick actions above! 💻`
+                    'default': `I can help with mobile coding! Try:\n- React Native components\n- Responsive CSS\n- Mobile optimization\n- API integration`
                 };
                 
                 const lowerMsg = message.toLowerCase();
                 let responseText = responses.default;
                 
                 if (lowerMsg.includes('react')) responseText = responses.react;
-                else if (lowerMsg.includes('python') || lowerMsg.includes('flask')) responseText = responses.python;
+                else if (lowerMsg.includes('python')) responseText = responses.python;
                 
                 addMessage('ai', responseText);
             }
@@ -430,17 +393,17 @@ if __name__ == '__main__':
             const container = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             
-            messageDiv.className = sender === 'user' ? 'message-user ml-auto max-w-[85%]' : 'message-ai max-w-[85%]';
+            messageDiv.className = sender === 'user' ? 'message-user' : 'message-ai';
             messageDiv.innerHTML = `
-                <div class="flex items-start space-x-4 p-6">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        sender === 'user' ? 'bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg' : 'bg-gradient-to-r from-green-400 to-blue-500 shadow-lg'
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        sender === 'user' ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gradient-to-r from-green-400 to-blue-500'
                     }">
-                        <i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'} text-white text-sm"></i>
+                        <i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'} text-white text-xs"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-semibold mb-2 ${sender === 'user' ? 'text-purple-300' : 'text-blue-300'}">${sender === 'user' ? 'You' : 'DevNest AI'}</div>
-                        <div class="text-slate-200 leading-relaxed whitespace-pre-wrap">${formatMessage(text)}</div>
+                        <div class="font-semibold mb-1 ${sender === 'user' ? 'text-purple-300' : 'text-blue-300'} text-sm">${sender === 'user' ? 'You' : 'DevNest AI'}</div>
+                        <div class="text-slate-200 leading-relaxed whitespace-pre-wrap text-sm">${formatMessage(text)}</div>
                     </div>
                 </div>
             `;
@@ -451,8 +414,8 @@ if __name__ == '__main__':
 
         function formatMessage(content) {
             return content
-                .replace(/\`\`\`([^]+?)\`\`\`/g, '<div class="code-block p-4 my-3 rounded-lg overflow-x-auto"><code class="whitespace-pre text-sm">$1</code></div>')
-                .replace(/\`(.*?)\`/g, '<code class="bg-slate-700 px-2 py-1 rounded text-sm border border-slate-600">$1</code>')
+                .replace(/\`\`\`([^]+?)\`\`\`/g, '<div class="bg-slate-900 p-3 my-2 rounded-lg overflow-x-auto border border-slate-600"><code class="whitespace-pre text-xs">$1</code></div>')
+                .replace(/\`(.*?)\`/g, '<code class="bg-slate-700 px-1.5 py-0.5 rounded text-xs border border-slate-600">$1</code>')
                 .replace(/\n/g, '<br>');
         }
 
@@ -460,18 +423,18 @@ if __name__ == '__main__':
             const container = document.getElementById('messages');
             const typingDiv = document.createElement('div');
             typingDiv.id = 'typingIndicator';
-            typingDiv.className = 'message-ai p-6 max-w-[85%]';
+            typingDiv.className = 'message-ai';
             typingDiv.innerHTML = `
-                <div class="flex items-start space-x-4">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-green-400 to-blue-500">
-                        <i class="fas fa-robot text-white text-sm"></i>
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-r from-green-400 to-blue-500">
+                        <i class="fas fa-robot text-white text-xs"></i>
                     </div>
                     <div>
-                        <div class="font-semibold text-blue-300 mb-2">DevNest AI</div>
+                        <div class="font-semibold text-blue-300 text-sm mb-1">DevNest AI</div>
                         <div class="typing-indicator flex space-x-1">
-                            <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
-                            <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
-                            <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+                            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+                            <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
                         </div>
                     </div>
                 </div>
@@ -492,7 +455,7 @@ if __name__ == '__main__':
         // Auto-focus on input
         setTimeout(() => {
             document.getElementById('messageInput').focus();
-        }, 500);
+        }, 1000);
     </script>
 </body>
 </html>
