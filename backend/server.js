@@ -78,29 +78,29 @@ app.post('/api/chat', async (req, res) => {
 
     let aiResponse;
 
-    try {
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: `You are DevNest AI - a professional coding assistant. You specialize in:
+    try {// server.js में model update करो
+const completion = await groq.chat.completions.create({
+  messages: [
+    {
+      role: "system",
+      content: `You are DevNest AI - a professional coding assistant. You specialize in:
 - React, JavaScript, TypeScript, Python, CSS, HTML
 - Web development and programming  
 - Code debugging and optimization
 - Clear explanations with code examples
 
 Always provide clean, efficient code with professional explanations. Be helpful and concise.`
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ],
-        model: "llama3-8b-8192",
-        temperature: 0.7,
-        max_tokens: 1024,
-        stream: false
-      });
+    },
+    {
+      role: "user",
+      content: message
+    }
+  ],
+  model: "llama-3.1-8b-instant", // ✅ Latest working model
+  temperature: 0.7,
+  max_tokens: 1024,
+  stream: false
+});
 
       aiResponse = completion.choices[0]?.message?.content || "I couldn't generate a response at the moment.";
       console.log('✅ GROQ Response received');
