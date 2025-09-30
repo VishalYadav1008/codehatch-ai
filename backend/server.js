@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
-const { Groq } = require('groq-sdk'); // ✅ GROQ SDK add kiya
+const { Groq } = require('groq-sdk');
 
 // Load environment variables
 dotenv.config();
@@ -25,7 +25,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ✅ GROQ Client initialization
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY // Tumhare .env se GROQ_API_KEY lega
+  apiKey: process.env.GROQ_API_KEY
 });
 
 console.log('🚀 Supabase Status:', supabaseUrl ? 'Connected' : 'Not Configured');
@@ -41,7 +41,8 @@ app.get('/api/health', async (req, res) => {
       success: true,
       message: '🚀 DevNest Backend Running!',
       database: error ? 'Connection Failed' : 'Supabase Connected',
-      groq: process.env.GROQ_API_KEY ? 'Configured' : 'Not Configured',
+      groq: process.env.GROQ_API_KEY ? 'ACTIVE' : 'DISABLED',
+      model: 'llama3-8b-8192',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -67,45 +68,52 @@ app.post('/api/chat', async (req, res) => {
 
     console.log('📨 Received message:', message);
 
+    // ✅ GROQ API call only - no manual responses
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: 'AI service is currently unavailable. Please try again later.'
+      });
+    }
+
     let aiResponse;
 
-    // ✅ GROQ API call karo
-    if (process.env.GROQ_API_KEY) {
-      try {
-        const completion = await groq.chat.completions.create({
-          messages: [
-            {
-              role: "system",
-              content: `You are DevNest AI - a helpful coding assistant. You specialize in:
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `You are DevNest AI - a professional coding assistant. You specialize in:
 - React, JavaScript, TypeScript, Python, CSS, HTML
-- Web development and programming
+- Web development and programming  
 - Code debugging and optimization
 - Clear explanations with code examples
 
-Always respond in a helpful, professional manner. Provide clean, efficient code with explanations.`
-            },
-            {
-              role: "user",
-              content: message
-            }
-          ],
-          model: "mixtral-8x7b-32768",
-          temperature: 0.7,
-          max_tokens: 1024,
-          stream: false
-        });
+Always provide clean, efficient code with professional explanations. Be helpful and concise.`
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        model: "llama3-8b-8192",
+        temperature: 0.7,
+        max_tokens: 1024,
+        stream: false
+      });
 
-        aiResponse = completion.choices[0]?.message?.content || "I couldn't generate a response.";
-        console.log('✅ GROQ Response received');
+      aiResponse = completion.choices[0]?.message?.content || "I couldn't generate a response at the moment.";
+      console.log('✅ GROQ Response received');
 
-      } catch (groqError) {
-        console.error('GROQ API Error:', groqError);
-        // Fallback to manual response if GROQ fails
-        aiResponse = generateAIResponse(message);
-      }
-    } else {
-      // If GROQ API key not configured, use manual responses
-      aiResponse = generateAIResponse(message);
+    } catch (groqError) {
+      console.error('GROQ API Error:', groqError);
+      
+      // Only error message, no manual responses
+      return res.status(500).json({
+        success: false,
+        message: 'AI service is temporarily unavailable. Please try again in a few moments.',
+        error: 'GROQ_API_ERROR'
+      });
     }
 
     // Save to Supabase
@@ -113,7 +121,7 @@ Always respond in a helpful, professional manner. Provide clean, efficient code 
       const { data, error } = await supabase
         .from('chats')
         .insert([{
-          user_id: userId || 'anonymous',
+          user_id: userId && userId.startsWith('anonymous') ? '00000000-0000-0000-0000-000000000000' : userId,
           prompt: message,
           response: aiResponse,
           created_at: new Date()
@@ -132,119 +140,18 @@ Always respond in a helpful, professional manner. Provide clean, efficient code 
     res.json({
       success: true,
       response: aiResponse,
-      message: "AI response generated successfully",
-      source: process.env.GROQ_API_KEY ? "GROQ AI" : "Manual Response"
+      message: "AI response generated successfully"
     });
 
   } catch (error) {
     console.error('Chat error:', error);
     res.status(500).json({
       success: false,
-      message: 'Chat failed',
+      message: 'An unexpected error occurred. Please try again.',
       error: error.message
     });
   }
 });
-
-// Fallback AI Response Generator (agar GROQ fail ho)
-function generateAIResponse(message) {
-  const lowerMessage = message.toLowerCase();
-  
-  if (lowerMessage.includes('react') || lowerMessage.includes('component')) {
-    return `**React Component Created!** 🚀\n\n\`\`\`jsx
-import React from 'react';
-
-function ${getComponentName(message)}() {
-  return (
-    <div className="p-6 bg-white rounded-lg shadow-lg">
-      <h1 className="text-2xl font-bold text-gray-800">
-        Welcome to React!
-      </h1>
-      <p className="text-gray-600 mt-2">
-        Start building amazing components!
-      </p>
-    </div>
-  );
-}
-
-export default ${getComponentName(message)};
-\`\`\``;
-  }
-  else if (lowerMessage.includes('css') || lowerMessage.includes('style')) {
-    return `**CSS Solution** 🎨\n\n\`\`\`css
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-}
-
-.card {
-  background: white;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-\`\`\``;
-  }
-  else if (lowerMessage.includes('javascript') || lowerMessage.includes('js')) {
-    return `**JavaScript Code** ⚡\n\n\`\`\`javascript
-// Modern JavaScript
-const ${getFunctionName(message)} = () => {
-  console.log('Hello JavaScript!');
-  
-  // Async example
-  const fetchData = async () => {
-    try {
-      const response = await fetch('/api/data');
-      return await response.json();
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-  
-  return 'Code executed successfully!';
-};
-
-${getFunctionName(message)}();
-\`\`\``;
-  }
-  else if (lowerMessage.includes('html')) {
-    return `**HTML Template** 📄\n\n\`\`\`html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevNest Template</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-lg text-center">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">🚀 Welcome!</h1>
-        <p class="text-gray-600">Your HTML template is ready.</p>
-    </div>
-</body>
-</html>
-\`\`\``;
-  }
-  else {
-    return `**Hello! I'm DevNest AI** 🤖\n\nI can help you with:\n\n• **React Components** - "Create a login form"\n• **CSS Styling** - "Center a div with CSS"\n• **JavaScript** - "Write API call code"\n• **HTML Templates** - "Create landing page"\n\nWhat would you like to build today? 💡`;
-  }
-}
-
-function getComponentName(message) {
-  const match = message.match(/create.*component.*for\s+(\w+)/i) || 
-                message.match(/component.*for\s+(\w+)/i);
-  return match ? match[1] + 'Component' : 'MyComponent';
-}
-
-function getFunctionName(message) {
-  const match = message.match(/function.*for\s+(\w+)/i) || 
-                message.match(/create.*function.*(\w+)/i);
-  return match ? match[1] : 'myFunction';
-}
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -257,7 +164,11 @@ app.get('/', (req, res) => {
       chat: 'POST /api/chat'
     },
     database: 'Supabase via .env',
-    ai: process.env.GROQ_API_KEY ? 'GROQ AI Enabled' : 'Manual Responses'
+    ai: {
+      provider: 'GROQ',
+      model: 'llama3-8b-8192',
+      status: process.env.GROQ_API_KEY ? 'ACTIVE' : 'DISABLED'
+    }
   });
 });
 
@@ -266,7 +177,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Health: http://localhost:${PORT}/api/health`);
-  console.log(`🤖 GROQ AI: ${process.env.GROQ_API_KEY ? 'ENABLED' : 'DISABLED'}`);
+  console.log(`🤖 GROQ AI: ${process.env.GROQ_API_KEY ? 'ACTIVE - llama3-8b-8192' : 'DISABLED'}`);
 });
 
 module.exports = app;
