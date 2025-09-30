@@ -57,6 +57,11 @@
         }
         [x-cloak] { display: none !important; }
         
+        /* Smooth scrolling */
+        .messages-container {
+            scroll-behavior: smooth;
+        }
+        
         /* Mobile First Design */
         @media (max-width: 768px) {
             .message-user, .message-ai {
@@ -145,7 +150,7 @@
             <template x-if="activeTab === 'chat'">
                 <div class="h-full flex flex-col">
                     <!-- Messages Area -->
-                    <div id="messages" class="flex-1 overflow-y-auto p-3 space-y-3 mobile-padding">
+                    <div id="messages" class="messages-container flex-1 overflow-y-auto p-3 space-y-3 mobile-padding">
                         <!-- Welcome Message -->
                         <div class="message-ai">
                             <div class="flex items-start space-x-2">
@@ -197,8 +202,9 @@
                                     id="messageInput"
                                     placeholder="Ask about code..."
                                     class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 mobile-input focus:outline-none focus:border-blue-500 text-sm"
+                                    onkeypress="handleKeyPress(event)"
                                 >
-                                <button onclick="sendMessage()" class="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <button onclick="sendMessage()" class="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hover:scale-110 transition">
                                     <i class="fas fa-paper-plane text-white text-xs"></i>
                                 </button>
                             </div>
@@ -327,6 +333,13 @@
     </div>
 
     <script>
+        // Enter key handler
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
         function quickAction(prompt) {
             document.getElementById('messageInput').value = prompt;
             sendMessage();
@@ -338,8 +351,13 @@
             
             if (!message) return;
 
-            addMessage('user', message);
+            // Clear input immediately
             input.value = '';
+            
+            // Add user message with smooth scroll
+            addMessage('user', message);
+            
+            // Show typing indicator
             showTyping();
 
             try {
@@ -409,7 +427,14 @@ def mobile_function():
             `;
             
             container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
+            
+            // Smooth scroll to bottom
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
 
         function formatMessage(content) {
@@ -440,17 +465,20 @@ def mobile_function():
                 </div>
             `;
             container.appendChild(typingDiv);
-            container.scrollTop = container.scrollHeight;
+            
+            // Smooth scroll to typing indicator
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
 
         function hideTyping() {
             const typing = document.getElementById('typingIndicator');
             if (typing) typing.remove();
         }
-
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendMessage();
-        });
 
         // Auto-focus on input
         setTimeout(() => {
