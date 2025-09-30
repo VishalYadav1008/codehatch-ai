@@ -6,7 +6,7 @@
   "scripts": {
     "build": "echo 'No build needed for backend' && exit 0",
     "vercel-build": "npm install",
-    "start": "node server.js",
+    "start": "node backend/server.js",
     "dev": "nodemon backend/server.js"
   },
   "dependencies": {
@@ -14,7 +14,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "jsonwebtoken": "^9.0.2",
-    "@supabase/supabase-js": "^2.38.0"
+    "@supabase/supabase-js": "^2.38.0",
+    "groq-sdk": "^0.3.0"  
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

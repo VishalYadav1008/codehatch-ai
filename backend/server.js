@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
+const { Groq } = require('groq-sdk'); // ✅ GROQ SDK add kiya
 
 // Load environment variables
 dotenv.config();
@@ -22,7 +23,13 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ✅ GROQ Client initialization
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY // Tumhare .env se GROQ_API_KEY lega
+});
+
 console.log('🚀 Supabase Status:', supabaseUrl ? 'Connected' : 'Not Configured');
+console.log('🤖 GROQ AI Status:', process.env.GROQ_API_KEY ? 'Connected' : 'Not Configured');
 
 // Health check
 app.get('/api/health', async (req, res) => {
@@ -34,6 +41,7 @@ app.get('/api/health', async (req, res) => {
       success: true,
       message: '🚀 DevNest Backend Running!',
       database: error ? 'Connection Failed' : 'Supabase Connected',
+      groq: process.env.GROQ_API_KEY ? 'Configured' : 'Not Configured',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -45,7 +53,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Chat endpoint
+// Chat endpoint with GROQ AI
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, userId } = req.body;
@@ -59,8 +67,46 @@ app.post('/api/chat', async (req, res) => {
 
     console.log('📨 Received message:', message);
 
-    // AI Response
-    const aiResponse = generateAIResponse(message);
+    let aiResponse;
+
+    // ✅ GROQ API call karo
+    if (process.env.GROQ_API_KEY) {
+      try {
+        const completion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content: `You are DevNest AI - a helpful coding assistant. You specialize in:
+- React, JavaScript, TypeScript, Python, CSS, HTML
+- Web development and programming
+- Code debugging and optimization
+- Clear explanations with code examples
+
+Always respond in a helpful, professional manner. Provide clean, efficient code with explanations.`
+            },
+            {
+              role: "user",
+              content: message
+            }
+          ],
+          model: "mixtral-8x7b-32768",
+          temperature: 0.7,
+          max_tokens: 1024,
+          stream: false
+        });
+
+        aiResponse = completion.choices[0]?.message?.content || "I couldn't generate a response.";
+        console.log('✅ GROQ Response received');
+
+      } catch (groqError) {
+        console.error('GROQ API Error:', groqError);
+        // Fallback to manual response if GROQ fails
+        aiResponse = generateAIResponse(message);
+      }
+    } else {
+      // If GROQ API key not configured, use manual responses
+      aiResponse = generateAIResponse(message);
+    }
 
     // Save to Supabase
     try {
@@ -86,7 +132,8 @@ app.post('/api/chat', async (req, res) => {
     res.json({
       success: true,
       response: aiResponse,
-      message: "AI response generated successfully"
+      message: "AI response generated successfully",
+      source: process.env.GROQ_API_KEY ? "GROQ AI" : "Manual Response"
     });
 
   } catch (error) {
@@ -99,7 +146,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// AI Response Generator
+// Fallback AI Response Generator (agar GROQ fail ho)
 function generateAIResponse(message) {
   const lowerMessage = message.toLowerCase();
   
@@ -209,7 +256,8 @@ app.get('/', (req, res) => {
       health: 'GET /api/health',
       chat: 'POST /api/chat'
     },
-    database: 'Supabase via .env'
+    database: 'Supabase via .env',
+    ai: process.env.GROQ_API_KEY ? 'GROQ AI Enabled' : 'Manual Responses'
   });
 });
 
@@ -218,6 +266,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Health: http://localhost:${PORT}/api/health`);
+  console.log(`🤖 GROQ AI: ${process.env.GROQ_API_KEY ? 'ENABLED' : 'DISABLED'}`);
 });
 
 module.exports = app;
