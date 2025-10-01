@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -88,7 +90,8 @@
         activeTab: 'chat',
         loggedIn: false,
         showLoginModal: false,
-        username: 'Developer'
+        username: 'Developer',
+        userEmail: ''
     }" class="mobile-container">
         
         <!-- Header - Mobile Optimized -->
@@ -257,19 +260,47 @@
                             <h3 class="text-xl font-bold text-white mb-2">Welcome to DevNest AI</h3>
                             <p class="text-slate-400 text-sm mb-6">Login to unlock all features</p>
 
+                            <!-- Social Login Buttons -->
+                            <div class="space-y-3 mb-4">
+                                <button 
+                                    onclick="googleLogin()"
+                                    class="w-full bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-4 rounded-lg border border-gray-300 transition flex items-center justify-center"
+                                >
+                                    <i class="fab fa-google text-red-500 mr-3"></i>
+                                    Continue with Google
+                                </button>
+                                
+                                <button 
+                                    onclick="githubLogin()"
+                                    class="w-full bg-gray-800 hover:bg-gray-900 text-white font-medium py-3 px-4 rounded-lg border border-gray-700 transition flex items-center justify-center"
+                                >
+                                    <i class="fab fa-github mr-3"></i>
+                                    Continue with GitHub
+                                </button>
+                            </div>
+
+                            <div class="relative my-6">
+                                <div class="absolute inset-0 flex items-center">
+                                    <div class="w-full border-t border-slate-600"></div>
+                                </div>
+                                <div class="relative flex justify-center text-sm">
+                                    <span class="px-2 bg-slate-900 text-slate-400">Or continue with email</span>
+                                </div>
+                            </div>
+
                             <div class="space-y-4 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-2 text-left">Email</label>
-                                    <input type="email" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="your@email.com">
+                                    <input type="email" id="emailInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="your@email.com">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-2 text-left">Password</label>
-                                    <input type="password" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="••••••••">
+                                    <input type="password" id="passwordInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="••••••••">
                                 </div>
                             </div>
 
                             <button 
-                                @click="loggedIn = true; username = 'Mobile User';" 
+                                onclick="emailLogin()"
                                 class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition mb-4"
                             >
                                 Sign In
@@ -277,7 +308,7 @@
 
                             <div class="text-center">
                                 <button class="text-slate-400 hover:text-white text-sm transition">
-                                    Don't have an account? <span class="text-blue-400 hover:text-blue-300">Sign up</span>
+                                    Don't have an account? <span class="text-blue-400 hover:text-blue-300" onclick="alert('Use Google/GitHub login or contact admin')">Sign up</span>
                                 </button>
                             </div>
                         </div>
@@ -291,6 +322,7 @@
                                 </div>
                                 <h3 class="text-xl font-bold text-white" x-text="username"></h3>
                                 <p class="text-green-400 text-sm">✓ Logged In</p>
+                                <p class="text-slate-400 text-sm mt-1" x-text="userEmail"></p>
                             </div>
 
                             <div class="space-y-3">
@@ -320,7 +352,7 @@
                             </div>
 
                             <button 
-                                @click="loggedIn = false" 
+                                onclick="logout()"
                                 class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 py-3 rounded-lg transition font-medium"
                             >
                                 <i class="fas fa-sign-out-alt mr-2"></i>Logout
@@ -333,7 +365,129 @@
     </div>
 
     <script>
-        // Enter key handler
+        // Supabase initialization
+        const supabaseUrl = 'https://dpkhytntovdupyppkgdc.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ2NzU3MjcsImV4cCI6MjAyMDI1MTcyN30.9qA8yfV3QQl6Y9N7H0Q7Q0vqT7z3Q3Q3Q3Q3Q3Q3Q3Q';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Check auth state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthState();
+        });
+
+        async function checkAuthState() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                updateUI(session.user);
+            }
+        }
+
+        // Google Login
+        async function googleLogin() {
+            try {
+                showLoading('Logging in with Google...');
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                });
+                if (error) throw error;
+            } catch (error) {
+                console.error('Google login error:', error);
+                hideLoading();
+                alert('Google login failed: ' + error.message);
+            }
+        }
+
+        // GitHub Login
+        async function githubLogin() {
+            try {
+                showLoading('Logging in with GitHub...');
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'github',
+                });
+                if (error) throw error;
+            } catch (error) {
+                console.error('GitHub login error:', error);
+                hideLoading();
+                alert('GitHub login failed: ' + error.message);
+            }
+        }
+
+        // Email Login (Basic)
+        async function emailLogin() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            try {
+                showLoading('Logging in...');
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+            } catch (error) {
+                console.error('Email login error:', error);
+                hideLoading();
+                alert('Login failed: ' + error.message);
+            }
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                
+                // Update UI
+                Alpine.$data.loggedIn = false;
+                Alpine.$data.username = 'Developer';
+                Alpine.$data.userEmail = '';
+                
+                alert('Logged out successfully!');
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Logout failed: ' + error.message);
+            }
+        }
+
+        // Update UI when auth state changes
+        function updateUI(user) {
+            Alpine.$data.loggedIn = true;
+            Alpine.$data.username = user.user_metadata?.name || user.email.split('@')[0];
+            Alpine.$data.userEmail = user.email;
+            hideLoading();
+        }
+
+        // Loading state functions
+        function showLoading(message) {
+            // You can add a loading spinner here
+            console.log('Loading:', message);
+        }
+
+        function hideLoading() {
+            // Hide loading spinner
+            console.log('Loading complete');
+        }
+
+        // Listen for auth state changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed:', event);
+            if (session?.user) {
+                updateUI(session.user);
+            } else {
+                Alpine.$data.loggedIn = false;
+                Alpine.$data.username = 'Developer';
+                Alpine.$data.userEmail = '';
+            }
+        });
+
+        // Existing chat functions
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
@@ -351,13 +505,8 @@
             
             if (!message) return;
 
-            // Clear input immediately
             input.value = '';
-            
-            // Add user message with smooth scroll
             addMessage('user', message);
-            
-            // Show typing indicator
             showTyping();
 
             try {
@@ -428,7 +577,6 @@ def mobile_function():
             
             container.appendChild(messageDiv);
             
-            // Smooth scroll to bottom
             setTimeout(() => {
                 container.scrollTo({
                     top: container.scrollHeight,
@@ -466,7 +614,6 @@ def mobile_function():
             `;
             container.appendChild(typingDiv);
             
-            // Smooth scroll to typing indicator
             setTimeout(() => {
                 container.scrollTo({
                     top: container.scrollHeight,
@@ -482,7 +629,8 @@ def mobile_function():
 
         // Auto-focus on input
         setTimeout(() => {
-            document.getElementById('messageInput').focus();
+            const input = document.getElementById('messageInput');
+            if (input) input.focus();
         }, 1000);
     </script>
 </body>
