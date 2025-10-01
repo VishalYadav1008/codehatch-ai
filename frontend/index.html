@@ -321,8 +321,8 @@
                                     <i class="fas fa-user-check text-white text-xl"></i>
                                 </div>
                                 <h3 class="text-xl font-bold text-white" x-text="username"></h3>
-                                <p class="text-green-400 text-sm">✓ Logged In</p>
                                 <p class="text-slate-400 text-sm mt-1" x-text="userEmail"></p>
+                                <p class="text-green-400 text-sm mt-2">✓ Logged In</p>
                             </div>
 
                             <div class="space-y-3">
@@ -365,34 +365,59 @@
     </div>
 
     <script>
-        // Supabase initialization
-        const supabaseUrl = 'https://dpkhytntovdupyppkgdc.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ2NzU3MjcsImV4cCI6MjAyMDI1MTcyN30.9qA8yfV3QQl6Y9N7H0Q7Q0vqT7z3Q3Q3Q3Q3Q3Q3Q3Q';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        // Supabase initialization - SABSE PEHLE
+        let supabase;
+
+        function initSupabase() {
+            try {
+                const supabaseUrl = 'https://dpkhytntovdupyppkgdc.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg';
+                
+                if (typeof window.supabase !== 'undefined') {
+                    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    console.log('✅ Supabase initialized successfully');
+                    checkAuthState();
+                } else {
+                    console.log('⏳ Waiting for Supabase CDN to load...');
+                    setTimeout(initSupabase, 100);
+                }
+            } catch (error) {
+                console.error('❌ Supabase init error:', error);
+            }
+        }
 
         // Check auth state on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthState();
-        });
-
         async function checkAuthState() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                updateUI(session.user);
+            try {
+                if (!supabase) {
+                    console.log('Supabase not ready yet');
+                    return;
+                }
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    updateUI(session.user);
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
             }
         }
 
         // Google Login
         async function googleLogin() {
             try {
-                showLoading('Logging in with Google...');
+                if (!supabase) {
+                    alert('Please wait, app is still loading...');
+                    return;
+                }
+                
+                console.log('🚀 Starting Google login...');
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                 });
                 if (error) throw error;
+                console.log('✅ Google login initiated');
             } catch (error) {
                 console.error('Google login error:', error);
-                hideLoading();
                 alert('Google login failed: ' + error.message);
             }
         }
@@ -400,14 +425,19 @@
         // GitHub Login
         async function githubLogin() {
             try {
-                showLoading('Logging in with GitHub...');
+                if (!supabase) {
+                    alert('Please wait, app is still loading...');
+                    return;
+                }
+                
+                console.log('🚀 Starting GitHub login...');
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'github',
                 });
                 if (error) throw error;
+                console.log('✅ GitHub login initiated');
             } catch (error) {
                 console.error('GitHub login error:', error);
-                hideLoading();
                 alert('GitHub login failed: ' + error.message);
             }
         }
@@ -423,17 +453,22 @@
             }
 
             try {
-                showLoading('Logging in...');
+                if (!supabase) {
+                    alert('Please wait, app is still loading...');
+                    return;
+                }
+
+                console.log('🚀 Starting email login...');
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
                 
                 if (error) throw error;
+                console.log('✅ Email login successful');
                 
             } catch (error) {
                 console.error('Email login error:', error);
-                hideLoading();
                 alert('Login failed: ' + error.message);
             }
         }
@@ -441,6 +476,8 @@
         // Logout
         async function logout() {
             try {
+                if (!supabase) return;
+                
                 const { error } = await supabase.auth.signOut();
                 if (error) throw error;
                 
@@ -461,30 +498,33 @@
             Alpine.$data.loggedIn = true;
             Alpine.$data.username = user.user_metadata?.name || user.email.split('@')[0];
             Alpine.$data.userEmail = user.email;
-            hideLoading();
-        }
-
-        // Loading state functions
-        function showLoading(message) {
-            // You can add a loading spinner here
-            console.log('Loading:', message);
-        }
-
-        function hideLoading() {
-            // Hide loading spinner
-            console.log('Loading complete');
+            console.log('✅ User logged in:', Alpine.$data.username);
         }
 
         // Listen for auth state changes
-        supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth state changed:', event);
-            if (session?.user) {
-                updateUI(session.user);
-            } else {
-                Alpine.$data.loggedIn = false;
-                Alpine.$data.username = 'Developer';
-                Alpine.$data.userEmail = '';
+        function setupAuthListener() {
+            if (!supabase) {
+                setTimeout(setupAuthListener, 100);
+                return;
             }
+            
+            supabase.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state changed:', event);
+                if (session?.user) {
+                    updateUI(session.user);
+                } else {
+                    Alpine.$data.loggedIn = false;
+                    Alpine.$data.username = 'Developer';
+                    Alpine.$data.userEmail = '';
+                }
+            });
+        }
+
+        // Page load initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page loaded, initializing Supabase...');
+            initSupabase();
+            setupAuthListener();
         });
 
         // Existing chat functions
@@ -633,5 +673,5 @@ def mobile_function():
             if (input) input.focus();
         }, 1000);
     </script>
-</body>
+</body> 
 </html>
