@@ -403,51 +403,50 @@
         }
 
         // Google Login
-    
-async function googleLogin() {
-    try {
-        if (!supabase) {
-            alert('Please wait, app is still loading...');
-            return;
-        }
-        
-        console.log('🚀 Starting Google login...');
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: 'https://devnest-ai.vercel.app'
+        async function googleLogin() {
+            try {
+                if (!supabase) {
+                    alert('Please wait, app is still loading...');
+                    return;
+                }
+                
+                console.log('🚀 Starting Google login...');
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: 'https://devnest-ai.vercel.app'
+                    }
+                });
+                if (error) throw error;
+                console.log('✅ Google login initiated');
+            } catch (error) {
+                console.error('Google login error:', error);
+                alert('Google login failed: ' + error.message);
             }
-        });
-        if (error) throw error;
-        console.log('✅ Google login initiated');
-    } catch (error) {
-        console.error('Google login error:', error);
-        alert('Google login failed: ' + error.message);
-    }
-}
+        }
+
         // GitHub Login
-    
-async function githubLogin() {
-    try {
-        if (!supabase) {
-            alert('Please wait, app is still loading...');
-            return;
-        }
-        
-        console.log('🚀 Starting GitHub login...');
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'github',
-            options: {
-                redirectTo: 'https://devnest-ai.vercel.app'
+        async function githubLogin() {
+            try {
+                if (!supabase) {
+                    alert('Please wait, app is still loading...');
+                    return;
+                }
+                
+                console.log('🚀 Starting GitHub login...');
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'github',
+                    options: {
+                        redirectTo: 'https://devnest-ai.vercel.app'
+                    }
+                });
+                if (error) throw error;
+                console.log('✅ GitHub login initiated');
+            } catch (error) {
+                console.error('GitHub login error:', error);
+                alert('GitHub login failed: ' + error.message);
             }
-        });
-        if (error) throw error;
-        console.log('✅ GitHub login initiated');
-    } catch (error) {
-        console.error('GitHub login error:', error);
-        alert('GitHub login failed: ' + error.message);
-    }
-}
+        }
 
         // Email Login (Basic)
         async function emailLogin() {
@@ -488,11 +487,8 @@ async function githubLogin() {
                 const { error } = await supabase.auth.signOut();
                 if (error) throw error;
                 
-                // Update UI
-                Alpine.$data.loggedIn = false;
-                Alpine.$data.username = 'Developer';
-                Alpine.$data.userEmail = '';
-                
+                // Update UI - FIXED
+                updateUILogout();
                 alert('Logged out successfully!');
             } catch (error) {
                 console.error('Logout error:', error);
@@ -500,15 +496,64 @@ async function githubLogin() {
             }
         }
 
-        // Update UI when auth state changes
+        // Update UI when auth state changes - FIXED VERSION
         function updateUI(user) {
-            Alpine.$data.loggedIn = true;
-            Alpine.$data.username = user.user_metadata?.name || user.email.split('@')[0];
-            Alpine.$data.userEmail = user.email;
-            console.log('✅ User logged in:', Alpine.$data.username);
+            console.log('🔄 Updating UI for user:', user.email);
+            
+            try {
+                // Alpine.js component dhundho
+                const alpineElement = document.querySelector('[x-data]');
+                if (alpineElement && alpineElement.__x) {
+                    const alpineData = alpineElement.__x.$data;
+                    
+                    // Data update karo
+                    alpineData.loggedIn = true;
+                    alpineData.username = user.user_metadata?.name || user.email.split('@')[0];
+                    alpineData.userEmail = user.email;
+                    
+                    console.log('✅ Alpine UI Updated:', alpineData.username);
+                    
+                    // Force Alpine reactivity
+                    Alpine.nextTick(() => {
+                        console.log('Alpine reactivity triggered');
+                    });
+                }
+                
+                // Success alert
+                alert(`✅ Login successful! Welcome ${user.user_metadata?.name || user.email}`);
+                
+            } catch (error) {
+                console.error('UI update error:', error);
+                // Fallback - page refresh
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
         }
 
-        // Listen for auth state changes
+        // Update UI for logout - FIXED
+        function updateUILogout() {
+            try {
+                const alpineElement = document.querySelector('[x-data]');
+                if (alpineElement && alpineElement.__x) {
+                    const alpineData = alpineElement.__x.$data;
+                    
+                    alpineData.loggedIn = false;
+                    alpineData.username = 'Developer';
+                    alpineData.userEmail = '';
+                    
+                    console.log('✅ UI updated for logout');
+                    
+                    Alpine.nextTick(() => {
+                        console.log('Alpine reactivity triggered for logout');
+                    });
+                }
+            } catch (error) {
+                console.error('Logout UI update error:', error);
+            }
+        }
+
+        // Listen for auth state changes - FIXED
         function setupAuthListener() {
             if (!supabase) {
                 setTimeout(setupAuthListener, 100);
@@ -517,12 +562,10 @@ async function githubLogin() {
             
             supabase.auth.onAuthStateChange((event, session) => {
                 console.log('Auth state changed:', event);
-                if (session?.user) {
+                if (event === 'SIGNED_IN' && session?.user) {
                     updateUI(session.user);
-                } else {
-                    Alpine.$data.loggedIn = false;
-                    Alpine.$data.username = 'Developer';
-                    Alpine.$data.userEmail = '';
+                } else if (event === 'SIGNED_OUT') {
+                    updateUILogout();
                 }
             });
         }
@@ -680,5 +723,5 @@ def mobile_function():
             if (input) input.focus();
         }, 1000);
     </script>
-</body> 
+</body>
 </html>
