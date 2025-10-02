@@ -403,44 +403,51 @@
         }
 
         // Google Login
-        async function googleLogin() {
-            try {
-                if (!supabase) {
-                    alert('Please wait, app is still loading...');
-                    return;
-                }
-                
-                console.log('🚀 Starting Google login...');
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                });
-                if (error) throw error;
-                console.log('✅ Google login initiated');
-            } catch (error) {
-                console.error('Google login error:', error);
-                alert('Google login failed: ' + error.message);
-            }
+    
+async function googleLogin() {
+    try {
+        if (!supabase) {
+            alert('Please wait, app is still loading...');
+            return;
         }
-
+        
+        console.log('🚀 Starting Google login...');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: 'https://devnest-ai.vercel.app'
+            }
+        });
+        if (error) throw error;
+        console.log('✅ Google login initiated');
+    } catch (error) {
+        console.error('Google login error:', error);
+        alert('Google login failed: ' + error.message);
+    }
+}
         // GitHub Login
-        async function githubLogin() {
-            try {
-                if (!supabase) {
-                    alert('Please wait, app is still loading...');
-                    return;
-                }
-                
-                console.log('🚀 Starting GitHub login...');
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: 'github',
-                });
-                if (error) throw error;
-                console.log('✅ GitHub login initiated');
-            } catch (error) {
-                console.error('GitHub login error:', error);
-                alert('GitHub login failed: ' + error.message);
-            }
+    
+async function githubLogin() {
+    try {
+        if (!supabase) {
+            alert('Please wait, app is still loading...');
+            return;
         }
+        
+        console.log('🚀 Starting GitHub login...');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'github',
+            options: {
+                redirectTo: 'https://devnest-ai.vercel.app'
+            }
+        });
+        if (error) throw error;
+        console.log('✅ GitHub login initiated');
+    } catch (error) {
+        console.error('GitHub login error:', error);
+        alert('GitHub login failed: ' + error.message);
+    }
+}
 
         // Email Login (Basic)
         async function emailLogin() {
