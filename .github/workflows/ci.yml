@@ -21,9 +21,12 @@ jobs:
         
     - name: Install dependencies
       run: npm install
+      working-directory: ./frontend
       
     - name: Run tests
       run: npm test
+      working-directory: ./frontend
       
     - name: Code linting
       run: npm run lint || echo "No linting setup"
+      working-directory: ./frontend
