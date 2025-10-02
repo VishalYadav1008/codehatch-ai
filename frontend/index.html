@@ -395,7 +395,8 @@
                 }
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
-                    updateUI(session.user);
+                    // Page load pe session mila toh alert nahi dikhao
+                    updateUI(session.user, false);
                 }
             } catch (error) {
                 console.error('Auth check error:', error);
@@ -487,7 +488,7 @@
                 const { error } = await supabase.auth.signOut();
                 if (error) throw error;
                 
-                // Update UI - FIXED
+                // Update UI
                 updateUILogout();
                 alert('Logged out successfully!');
             } catch (error) {
@@ -496,45 +497,38 @@
             }
         }
 
-        // Update UI when auth state changes - COMPLETELY FIXED
-        function updateUI(user) {
+        // Update UI when auth state changes - FIXED (No duplicate alerts)
+        function updateUI(user, showAlert = false) {
             console.log('🔄 Updating UI for user:', user.email);
             
             try {
-                // Alpine.js component directly access karo
+                // Alpine.js update
                 const alpineElement = document.querySelector('[x-data]');
                 if (alpineElement && alpineElement.__x) {
                     const alpine = alpineElement.__x;
-                    
-                    // Alpine data update karo
                     alpine.$data.loggedIn = true;
                     alpine.$data.username = user.user_metadata?.name || user.email.split('@')[0];
                     alpine.$data.userEmail = user.email;
                     alpine.$data.activeTab = 'chat'; // Automatically chat tab pe switch karo
                     
-                    console.log('✅ Alpine UI Updated:', alpine.$data.username);
-                    
-                    // Force Alpine reactivity
                     Alpine.nextTick(() => {
                         console.log('Alpine reactivity triggered');
                     });
                 }
                 
-                // Success message
-                setTimeout(() => {
-                    alert(`✅ Login successful! Welcome ${user.user_metadata?.name || user.email}`);
-                }, 500);
+                // Sirf NEW login pe hi alert dikhao
+                if (showAlert) {
+                    setTimeout(() => {
+                        alert(`✅ Login successful! Welcome ${user.user_metadata?.name || user.email}`);
+                    }, 500);
+                }
                 
             } catch (error) {
                 console.error('UI update error:', error);
-                // Fallback - page refresh
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
             }
         }
 
-        // Update UI for logout - FIXED
+        // Update UI for logout
         function updateUILogout() {
             try {
                 const alpineElement = document.querySelector('[x-data]');
@@ -566,8 +560,13 @@
             
             supabase.auth.onAuthStateChange((event, session) => {
                 console.log('Auth state changed:', event);
+                
                 if (event === 'SIGNED_IN' && session?.user) {
-                    updateUI(session.user);
+                    // Sirf NEW SIGN_IN pe hi alert dikhao
+                    updateUI(session.user, true);
+                } else if (event === 'INITIAL_SESSION' && session?.user) {
+                    // Page load pe session mila toh alert nahi dikhao
+                    updateUI(session.user, false);
                 } else if (event === 'SIGNED_OUT') {
                     updateUILogout();
                 }
