@@ -1,0 +1,8 @@
+# This file controls who is required to review pull requests
+
+* @your-github-username
+
+# Critical files protection
+/package.json @your-github-username
+/src/**/* @your-github-username
+/config/**/* @your-github-username
