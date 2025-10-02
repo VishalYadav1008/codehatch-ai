@@ -219,20 +219,20 @@
             <!-- History Tab -->
             <template x-if="activeTab === 'history'">
                 <div class="h-full p-4 mobile-padding">
-                    <template x-if="!loggedIn">
+                    <template x-if="!$data.loggedIn">
                         <div class="text-center h-full flex flex-col items-center justify-center">
                             <i class="fas fa-history text-4xl mb-4 text-slate-500"></i>
                             <h3 class="text-lg font-semibold text-slate-300 mb-2">Chat History</h3>
                             <p class="text-slate-400 text-sm mb-4">Login to save and view your chat history</p>
                             <button 
-                                @click="activeTab = 'login'" 
+                                @click="$data.activeTab = 'login'" 
                                 class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition font-medium"
                             >
                                 <i class="fas fa-sign-in-alt mr-2"></i>Go to Login
                             </button>
                         </div>
                     </template>
-                    <template x-if="loggedIn">
+                    <template x-if="$data.loggedIn">
                         <div class="space-y-3">
                             <h3 class="text-lg font-semibold text-white mb-4">Your Chat History</h3>
                             <div class="bg-slate-800 rounded-lg p-3 border border-slate-700">
@@ -251,7 +251,7 @@
             <!-- Login/Account Tab -->
             <template x-if="activeTab === 'login'">
                 <div class="h-full p-4 mobile-padding">
-                    <template x-if="!loggedIn">
+                    <template x-if="!$data.loggedIn">
                         <div class="text-center h-full flex flex-col justify-center">
                             <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                 <i class="fas fa-user-lock text-white text-2xl"></i>
@@ -314,14 +314,14 @@
                         </div>
                     </template>
 
-                    <template x-if="loggedIn">
+                    <template x-if="$data.loggedIn">
                         <div class="space-y-6">
                             <div class="text-center">
                                 <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <i class="fas fa-user-check text-white text-xl"></i>
                                 </div>
-                                <h3 class="text-xl font-bold text-white" x-text="username"></h3>
-                                <p class="text-slate-400 text-sm mt-1" x-text="userEmail"></p>
+                                <h3 class="text-xl font-bold text-white" x-text="$data.username"></h3>
+                                <p class="text-slate-400 text-sm mt-1" x-text="$data.userEmail"></p>
                                 <p class="text-green-400 text-sm mt-2">✓ Logged In</p>
                             </div>
 
@@ -496,22 +496,23 @@
             }
         }
 
-        // Update UI when auth state changes - FIXED VERSION
+        // Update UI when auth state changes - COMPLETELY FIXED
         function updateUI(user) {
             console.log('🔄 Updating UI for user:', user.email);
             
             try {
-                // Alpine.js component dhundho
+                // Alpine.js component directly access karo
                 const alpineElement = document.querySelector('[x-data]');
                 if (alpineElement && alpineElement.__x) {
-                    const alpineData = alpineElement.__x.$data;
+                    const alpine = alpineElement.__x;
                     
-                    // Data update karo
-                    alpineData.loggedIn = true;
-                    alpineData.username = user.user_metadata?.name || user.email.split('@')[0];
-                    alpineData.userEmail = user.email;
+                    // Alpine data update karo
+                    alpine.$data.loggedIn = true;
+                    alpine.$data.username = user.user_metadata?.name || user.email.split('@')[0];
+                    alpine.$data.userEmail = user.email;
+                    alpine.$data.activeTab = 'chat'; // Automatically chat tab pe switch karo
                     
-                    console.log('✅ Alpine UI Updated:', alpineData.username);
+                    console.log('✅ Alpine UI Updated:', alpine.$data.username);
                     
                     // Force Alpine reactivity
                     Alpine.nextTick(() => {
@@ -519,8 +520,10 @@
                     });
                 }
                 
-                // Success alert
-                alert(`✅ Login successful! Welcome ${user.user_metadata?.name || user.email}`);
+                // Success message
+                setTimeout(() => {
+                    alert(`✅ Login successful! Welcome ${user.user_metadata?.name || user.email}`);
+                }, 500);
                 
             } catch (error) {
                 console.error('UI update error:', error);
@@ -536,11 +539,12 @@
             try {
                 const alpineElement = document.querySelector('[x-data]');
                 if (alpineElement && alpineElement.__x) {
-                    const alpineData = alpineElement.__x.$data;
+                    const alpine = alpineElement.__x;
                     
-                    alpineData.loggedIn = false;
-                    alpineData.username = 'Developer';
-                    alpineData.userEmail = '';
+                    alpine.$data.loggedIn = false;
+                    alpine.$data.username = 'Developer';
+                    alpine.$data.userEmail = '';
+                    alpine.$data.activeTab = 'login'; // Logout ke baad login tab pe jao
                     
                     console.log('✅ UI updated for logout');
                     
