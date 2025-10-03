@@ -287,8 +287,6 @@
                                             <li>Creative writing & content</li>
                                             <li>Problem solving & analysis</li>
                                             <li>Learning & research</li>
-                                            <li>Science & technology</li>
-                                            <li>Business & productivity</li>
                                         </ul>
                                         <p class="mt-2 text-xs">Ask me anything! 💫</p>
                                     </div>
@@ -370,7 +368,7 @@
                             </div>
                             
                             <h3 class="text-xl font-bold text-white mb-2">Welcome to CodeHatch AI</h3>
-                            <p class="text-slate-400 text-sm mb-6">Your intelligent AI assistant for everything</p>
+                            <p class="text-slate-400 text-sm mb-6">Login to unlock all features</p>
 
                             <!-- Social Login Buttons -->
                             <div class="space-y-3 mb-4">
@@ -458,13 +456,21 @@
         let conversationHistory = [];
         let isGenerating = false;
 
-        // Supabase initialization - FIXED VERSION
+        // Supabase initialization
         let supabase;
+
+        // Environment variables - these will be replaced by your build process
+        const ENV = {
+            SUPABASE_URL: 'https://dpkhytntovdupyppkgdc.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg',
+            GROQ_API_KEY: 'gsk_1pP6vKQ5i2Wzq7h9wX8YT3BlbkFJvNtUcBmLoAeDfGhIj2',
+            GROQ_API_URL: 'https://api.groq.com/openai/v1/chat/completions'
+        };
 
         function initSupabase() {
             try {
-                const supabaseUrl = 'https://dpkhytntovdupyppkgdc.supabase.co';
-                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg';
+                const supabaseUrl = ENV.SUPABASE_URL;
+                const supabaseKey = ENV.SUPABASE_ANON_KEY;
                 
                 if (typeof window.supabase !== 'undefined') {
                     supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
@@ -486,7 +492,7 @@
             }
         }
 
-        // Check auth state - COMPLETELY FIXED
+        // Check auth state
         async function checkAuthState() {
             try {
                 if (!supabase) {
@@ -498,7 +504,6 @@
                 
                 if (error) {
                     console.error('Session error:', error);
-                    // Force clear any corrupted session
                     await supabase.auth.signOut();
                     updateUILogout();
                     return;
@@ -517,7 +522,7 @@
             }
         }
 
-        // Auth state listener - FIXED
+        // Auth state listener
         function setupAuthListener() {
             if (!supabase) {
                 setTimeout(setupAuthListener, 100);
@@ -535,7 +540,6 @@
                         break;
                         
                     case 'SIGNED_OUT':
-                        // Clear everything on sign out
                         await clearAuthData();
                         updateUILogout();
                         break;
@@ -612,7 +616,7 @@
             }
         }
 
-        // Logout - FIXED
+        // Logout
         async function logout() {
             try {
                 if (!supabase) return;
@@ -631,7 +635,7 @@
             }
         }
 
-        // Update UI when auth state changes - FIXED
+        // Update UI when auth state changes
         function updateUI(user, showAlert = false) {
             console.log('🔄 Updating UI for user:', user?.email);
             
@@ -643,7 +647,6 @@
                     alpine.$data.loggedIn = true;
                     alpine.$data.username = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
                     alpine.$data.userEmail = user.email || '';
-                    // Login ke baad chat tab pe raho, login tab pe nahi jao
                     if (alpine.$data.activeTab === 'login') {
                         alpine.$data.activeTab = 'chat';
                     }
@@ -660,7 +663,7 @@
             }
         }
 
-        // Update UI for logout - FIXED
+        // Update UI for logout
         function updateUILogout() {
             console.log('🔄 Updating UI for logout');
             
@@ -672,7 +675,6 @@
                     alpine.$data.loggedIn = false;
                     alpine.$data.username = 'User';
                     alpine.$data.userEmail = '';
-                    // Logout ke baad bhi chat tab pe raho
                     alpine.$data.activeTab = 'chat';
                     
                     console.log('✅ UI Updated - Logged Out');
@@ -686,11 +688,7 @@
             }
         }
 
-        // Groq API Configuration - .env se value aayegi
-        const GROQ_API_KEY = 'gsk_1pP6vKQ5i2Wzq7h9wX8YT3BlbkFJvNtUcBmLoAeDfGhIj2'; // Tumhara .env value
-        const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
-        // Chat functions
+        // Chat functions - FIXED VERSION
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
@@ -712,10 +710,8 @@
             const messageId = 'msg_' + Date.now();
             addMessage('user', message, messageId);
             
-            // Add user message to conversation history
             conversationHistory.push({ role: 'user', content: message });
             
-            // Show typing indicator
             const typingElement = showTyping();
             isGenerating = true;
 
@@ -730,11 +726,13 @@
                     ...recentHistory
                 ];
 
-                const response = await fetch(GROQ_API_URL, {
+                console.log('📤 Sending request to Groq API...');
+                
+                const response = await fetch(ENV.GROQ_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${GROQ_API_KEY}`
+                        'Authorization': `Bearer ${ENV.GROQ_API_KEY}`
                     },
                     body: JSON.stringify({
                         model: 'llama3-8b-8192',
@@ -745,19 +743,22 @@
                     })
                 });
 
+                console.log('📥 Response status:', response.status);
+
                 if (!response.ok) {
-                    throw new Error(`Groq API error: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('API Error:', errorText);
+                    throw new Error(`Groq API error: ${response.status} - ${errorText}`);
                 }
 
                 const data = await response.json();
+                console.log('✅ API Response received:', data);
                 
                 if (data.choices && data.choices[0] && data.choices[0].message) {
                     const aiResponse = data.choices[0].message.content;
                     
-                    // Add AI response to conversation history
                     conversationHistory.push({ role: 'assistant', content: aiResponse });
                     
-                    // Remove typing indicator and show real-time typing
                     hideTyping();
                     await typeMessageRealTime(aiResponse, typingElement);
                     
@@ -766,10 +767,10 @@
                 }
 
             } catch (error) {
-                console.error('Groq API error:', error);
+                console.error('❌ Groq API error:', error);
                 hideTyping();
                 
-                // Smart fallback response for general purpose
+                // Smart fallback response
                 const fallbackResponse = getSmartResponse(message);
                 conversationHistory.push({ role: 'assistant', content: fallbackResponse });
                 
@@ -779,22 +780,20 @@
             }
         }
 
-        // Smart fallback responses - GENERAL PURPOSE
+        // Smart fallback responses
         function getSmartResponse(message) {
             const lowerMsg = message.toLowerCase();
             
             const responses = {
                 'hello': `Hello! 👋 I'm CodeHatch AI, your intelligent assistant. I can help you with anything! 🚀\n\nWhether you need:\n• Coding & programming help\n• Writing & content creation\n• Learning & explanations\n• Problem solving & analysis\n• Science & technology\n• Business & productivity\n\nWhat would you like to explore today? 💫`,
                 
+                'hi': `Hi there! 🎉 I'm CodeHatch AI, your AI assistant.\n\nI'm here to help you with:\n- Programming and coding\n- Learning and education\n- Creative writing\n- Problem solving\n- Research and analysis\n- And much more!\n\nWhat can I help you with today? 🚀`,
+                
+                'test': `✅ Test successful! I'm CodeHatch AI and I'm working properly.\n\nI can help you with:\n🔹 Coding & programming\n🔹 Writing & content\n🔹 Learning & research\n🔹 Problem solving\n🔹 Creative tasks\n\nWhat would you like me to help you with? 💫`,
+                
+                'help': `**I'm Here to Help!** 🤝\n\nI can assist you with:\n\n💻 **Programming & Tech**\n- Code writing & debugging\n- Web development\n- Programming concepts\n- Best practices\n\n📚 **Learning & Education**\n- Explanations & tutorials\n- Study resources\n- Concept breakdowns\n\n✍️ **Writing & Content**\n- Creative writing\n- Content creation\n- Editing & improvement\n\n🔧 **Problem Solving**\n- Technical issues\n- Learning challenges\n- Project planning\n\nJust tell me what you need help with! 💫`,
+                
                 'python': `**Python Programming** 🐍\n\nHere's a Python example:\n\n\`\`\`python\n# Function to calculate factorial\ndef factorial(n):\n    if n == 0:\n        return 1\n    else:\n        return n * factorial(n-1)\n\n# Usage\nprint(factorial(5))  # Output: 120\n\`\`\`\n\nNeed help with specific Python concepts or anything else?`,
-                
-                'science': `**Science & Technology** 🔬\n\nI can help you with various scientific topics:\n\n• **Physics**: Quantum mechanics, relativity, classical mechanics\n• **Chemistry**: Organic, inorganic, biochemistry\n• **Biology**: Genetics, evolution, cellular biology\n• **Computer Science**: Algorithms, data structures, AI/ML\n• **Astronomy**: Space, planets, cosmology\n\nWhat specific scientific topic interests you?`,
-                
-                'write': `**Writing & Content Creation** ✍️\n\nI can assist with:\n\n• **Creative Writing**: Stories, poetry, scripts\n• **Technical Writing**: Documentation, manuals\n• **Content Writing**: Blogs, articles, social media\n• **Academic Writing**: Essays, research papers\n• **Business Writing**: Reports, proposals, emails\n\nWhat type of writing help do you need?`,
-                
-                'learn': `**Learning & Education** 📚\n\nI can help you learn:\n\n• **Programming Languages**: Python, JavaScript, Java, C++\n• **Web Development**: HTML, CSS, React, Node.js\n• **Data Science**: ML, AI, statistics, visualization\n• **Mathematics**: Algebra, calculus, statistics\n• **Languages**: English, Spanish, French, etc.\n• **Professional Skills**: Leadership, communication\n\nWhat would you like to learn?`,
-                
-                'business': `**Business & Productivity** 💼\n\nI can assist with:\n\n• **Business Planning**: Strategy, marketing, finance\n• **Productivity**: Time management, organization\n• **Career Development**: Resumes, interviews, skills\n• **Entrepreneurship**: Startups, funding, growth\n• **Management**: Leadership, team building\n\nWhat business aspect can I help you with?`,
                 
                 'default': `I understand you're asking about: "${message}"\n\nI'd be happy to help you with this! As your general-purpose AI assistant, I can provide:\n\n🔹 **Detailed explanations** on any topic\n🔹 **Step-by-step guidance** for learning\n🔹 **Creative ideas** and inspiration\n🔹 **Problem-solving** strategies\n🔹 **Code examples** and debugging\n🔹 **Research assistance** and analysis\n\nCould you please provide more details about what specific help you need? This will help me give you the most accurate and useful response! 🚀`
             };
@@ -816,7 +815,6 @@
                 const speed = 10;
                 const messageId = 'msg_' + Date.now();
                 
-                // Replace typing indicator with actual message container
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message-ai';
                 messageDiv.id = messageId;
