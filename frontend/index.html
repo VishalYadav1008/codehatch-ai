@@ -459,18 +459,39 @@
         // Supabase initialization
         let supabase;
 
-        // Environment variables - these will be replaced by your build process
-        const ENV = {
-            SUPABASE_URL: 'https://dpkhytntovdupyppkgdc.supabase.co',
-            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg',
-            GROQ_API_KEY: 'gsk_1pP6vKQ5i2Wzq7h9wX8YT3BlbkFJvNtUcBmLoAeDfGhIj2',
-            GROQ_API_URL: 'https://api.groq.com/openai/v1/chat/completions'
+        // Environment Configuration
+        const CONFIG = {
+            // Vercel Environment Variables - Vite prefix ke saath
+            GROQ_API_KEY: typeof import !== 'undefined' && import.meta && import.meta.env ? 
+                          import.meta.env.VITE_GROQ_API_KEY : 
+                          (window.ENV ? window.ENV.GROQ_API_KEY : ''),
+            
+            GROQ_API_URL: 'https://api.groq.com/openai/v1/chat/completions',
+            
+            SUPABASE_URL: typeof import !== 'undefined' && import.meta && import.meta.env ? 
+                         import.meta.env.VITE_SUPABASE_URL : 
+                         (window.ENV ? window.ENV.SUPABASE_URL : 'https://dpkhytntovdupyppkgdc.supabase.co'),
+            
+            SUPABASE_ANON_KEY: typeof import !== 'undefined' && import.meta && import.meta.env ? 
+                              import.meta.env.VITE_SUPABASE_ANON_KEY : 
+                              (window.ENV ? window.ENV.SUPABASE_ANON_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg')
         };
+
+        // Configuration check
+        console.log('🔧 Configuration Loaded:', {
+            hasGroqKey: !!CONFIG.GROQ_API_KEY,
+            groqKeyLength: CONFIG.GROQ_API_KEY ? CONFIG.GROQ_API_KEY.length : 0,
+            hasSupabase: !!CONFIG.SUPABASE_URL
+        });
+
+        if (!CONFIG.GROQ_API_KEY) {
+            console.error('❌ GROQ_API_KEY not found in environment variables');
+        }
 
         function initSupabase() {
             try {
-                const supabaseUrl = ENV.SUPABASE_URL;
-                const supabaseKey = ENV.SUPABASE_ANON_KEY;
+                const supabaseUrl = CONFIG.SUPABASE_URL;
+                const supabaseKey = CONFIG.SUPABASE_ANON_KEY;
                 
                 if (typeof window.supabase !== 'undefined') {
                     supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
@@ -688,7 +709,7 @@
             }
         }
 
-        // Chat functions - FIXED VERSION
+        // Chat functions
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
@@ -698,6 +719,12 @@
         async function sendMessage() {
             if (isGenerating) {
                 alert('Please wait for the current response to complete...');
+                return;
+            }
+
+            // API key check
+            if (!CONFIG.GROQ_API_KEY) {
+                alert('❌ API Key not configured. Please check environment variables.');
                 return;
             }
 
@@ -728,11 +755,11 @@
 
                 console.log('📤 Sending request to Groq API...');
                 
-                const response = await fetch(ENV.GROQ_API_URL, {
+                const response = await fetch(CONFIG.GROQ_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${ENV.GROQ_API_KEY}`
+                        'Authorization': `Bearer ${CONFIG.GROQ_API_KEY}`
                     },
                     body: JSON.stringify({
                         model: 'llama3-8b-8192',
@@ -835,20 +862,30 @@
                     </div>
                 `;
                 
-                typingElement.replaceWith(messageDiv);
+                // Safe replacement
+                if (typingElement && typingElement.parentNode) {
+                    typingElement.parentNode.replaceChild(messageDiv, typingElement);
+                } else {
+                    document.getElementById('messages').appendChild(messageDiv);
+                }
+                
                 const contentElement = document.getElementById(`typing-content-${messageId}`);
                 
                 function typeCharacter() {
                     if (index < text.length) {
                         const currentText = text.substring(0, index + 1);
-                        contentElement.innerHTML = formatMessage(currentText) + '<span class="typing-cursor"></span>';
+                        if (contentElement) {
+                            contentElement.innerHTML = formatMessage(currentText) + '<span class="typing-cursor"></span>';
+                        }
                         
                         index++;
                         
                         smoothScrollToBottom();
                         setTimeout(typeCharacter, speed);
                     } else {
-                        contentElement.innerHTML = formatMessage(text);
+                        if (contentElement) {
+                            contentElement.innerHTML = formatMessage(text);
+                        }
                         smoothScrollToBottom();
                         resolve();
                     }
