@@ -64,6 +64,18 @@
             scroll-behavior: smooth;
         }
         
+        /* Typewriter effect */
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid #3b82f6;
+            white-space: pre-wrap;
+            animation: blink-caret 1s infinite;
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #3b82f6; }
+        }
+        
         /* Mobile First Design */
         @media (max-width: 768px) {
             .message-user, .message-ai {
@@ -366,7 +378,11 @@
     </div>
 
     <script>
-        // Supabase initialization - SABSE PEHLE
+        // Chat memory - yeh previous conversations remember karega
+        let chatMemory = [];
+        let currentConversationContext = '';
+
+        // Supabase initialization
         let supabase;
 
         function initSupabase() {
@@ -488,7 +504,6 @@
                 const { error } = await supabase.auth.signOut();
                 if (error) throw error;
                 
-                // Update UI - FIXED
                 updateUILogout();
                 alert('Logged out successfully!');
             } catch (error) {
@@ -497,45 +512,40 @@
             }
         }
 
-        // Update UI when auth state changes - COMPLETELY FIXED
+        // Update UI when auth state changes
         function updateUI(user) {
             console.log('🔄 Updating UI for user:', user.email);
             
             try {
-                // Alpine.js component directly access karo
                 const alpineElement = document.querySelector('[x-data]');
                 if (alpineElement && alpineElement.__x) {
                     const alpine = alpineElement.__x;
                     
-                    // Alpine data update karo
                     alpine.$data.loggedIn = true;
                     alpine.$data.username = user.user_metadata?.name || user.email.split('@')[0];
                     alpine.$data.userEmail = user.email;
-                    alpine.$data.activeTab = 'chat'; // Automatically chat tab pe switch karo
+                    alpine.$data.activeTab = 'chat';
                     
                     console.log('✅ Alpine UI Updated:', alpine.$data.username);
                     
-                    // Force Alpine reactivity
                     Alpine.nextTick(() => {
                         console.log('Alpine reactivity triggered');
                     });
                 }
                 
-                // Success message
                 setTimeout(() => {
                     alert(`✅ Login successful! Welcome ${user.user_metadata?.name || user.email}`);
                 }, 500);
                 
             } catch (error) {
                 console.error('UI update error:', error);
-                // Fallback - page refresh
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
             }
         }
 
-        // Update UI for logout - FIXED
+        // Update UI for logout
         function updateUILogout() {
             try {
                 const alpineElement = document.querySelector('[x-data]');
@@ -545,7 +555,7 @@
                     alpine.$data.loggedIn = false;
                     alpine.$data.username = 'User';
                     alpine.$data.userEmail = '';
-                    alpine.$data.activeTab = 'login'; // Logout ke baad login tab pe jao
+                    alpine.$data.activeTab = 'login';
                     
                     console.log('✅ UI updated for logout');
                     
@@ -558,7 +568,7 @@
             }
         }
 
-        // Listen for auth state changes - FIXED
+        // Listen for auth state changes
         function setupAuthListener() {
             if (!supabase) {
                 setTimeout(setupAuthListener, 100);
@@ -582,7 +592,7 @@
             setupAuthListener();
         });
 
-        // Existing chat functions
+        // Chat functions
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
@@ -602,49 +612,184 @@
 
             input.value = '';
             addMessage('user', message);
+            
+            // Chat memory mein add karo
+            chatMemory.push({ role: 'user', content: message });
+            
+            // Context update karo based on current conversation
+            updateConversationContext(message);
+            
             showTyping();
 
             try {
-                const response = await fetch('https://gu-ai.onrender.com/api/chat', {
+                const response = await fetch('https://devnest-ai.onrender.com/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ 
                         message: message,
-                        userId: 'mobile-user-' + Date.now()
+                        userId: 'mobile-user-' + Date.now(),
+                        context: currentConversationContext // Context bhejo
                     })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     hideTyping();
-                    addMessage('ai', data.response || data.message);
+                    
+                    // Typewriter effect ke saath message show karo
+                    const aiResponse = data.response || data.message;
+                    chatMemory.push({ role: 'assistant', content: aiResponse });
+                    addMessageWithTypewriter('ai', aiResponse);
                 } else {
                     throw new Error('Backend unavailable');
                 }
 
             } catch (error) {
+                console.log('Backend failed, using smart responses...');
                 hideTyping();
-                const responses = {
-                    'science': `Quantum computing is an area of computing focused on developing computer technology based on the principles of quantum theory. It uses quantum bits or qubits which can exist in multiple states simultaneously, unlike classical bits which are either 0 or 1.`,
-                    'writing': `Nature's gentle whispers in the breeze,
-Trees swaying softly, putting minds at ease.
-Birds singing melodies so sweet and clear,
-Bringing joy and banishing all fear.`,
-                    'geography': `The capital of Japan is Tokyo, one of the world's most populous metropolitan areas. It's known for its modern skyscrapers, historic temples, and vibrant pop culture.`,
-                    'default': `I'm here to help with any questions you might have! Whether it's about science, history, writing, or general knowledge, feel free to ask me anything.`
-                };
                 
                 const lowerMsg = message.toLowerCase();
-                let responseText = responses.default;
+                let responseText = generateSmartResponse(lowerMsg, message);
                 
-                if (lowerMsg.includes('quantum') || lowerMsg.includes('science')) responseText = responses.science;
-                else if (lowerMsg.includes('poem') || lowerMsg.includes('write')) responseText = responses.writing;
-                else if (lowerMsg.includes('japan') || lowerMsg.includes('capital')) responseText = responses.geography;
+                // Chat memory mein add karo
+                chatMemory.push({ role: 'assistant', content: responseText });
                 
-                addMessage('ai', responseText);
+                // Typewriter effect ke saath message show karo
+                addMessageWithTypewriter('ai', responseText);
             }
         }
 
+        // Conversation context update karta hai
+        function updateConversationContext(newMessage) {
+            const lowerMsg = newMessage.toLowerCase();
+            
+            // Agar naya topic start ho raha hai
+            if (chatMemory.length === 0 || isNewTopic(lowerMsg)) {
+                currentConversationContext = extractTopic(newMessage);
+            }
+            
+            // Last 3 messages se context build karo
+            const recentMessages = chatMemory.slice(-3).map(msg => msg.content).join(' ');
+            if (recentMessages.length > 0) {
+                currentConversationContext = recentMessages;
+            }
+        }
+
+        // Check if user is starting a new topic
+        function isNewTopic(message) {
+            const newTopicIndicators = [
+                'what is', 'explain', 'tell me about', 'how to', 'why is',
+                'can you', 'could you', 'i want to know about'
+            ];
+            
+            return newTopicIndicators.some(indicator => message.includes(indicator));
+        }
+
+        // Extract main topic from message
+        function extractTopic(message) {
+            // Simple topic extraction
+            const words = message.toLowerCase().split(' ');
+            const stopWords = ['what', 'is', 'the', 'a', 'an', 'how', 'to', 'do', 'you', 'can', 'could', 'explain', 'tell', 'me', 'about'];
+            
+            const topicWords = words.filter(word => 
+                !stopWords.includes(word) && word.length > 3
+            );
+            
+            return topicWords.join(' ') || message.substring(0, 30);
+        }
+
+        // SMART RESPONSE GENERATOR WITH CONTEXT AWARENESS
+        function generateSmartResponse(lowerMsg, originalMsg) {
+            // Previous context check karo
+            const hasPreviousContext = chatMemory.length > 2;
+            const lastUserMessage = hasPreviousContext ? chatMemory[chatMemory.length - 2].content : '';
+            
+            // Context-aware responses
+            if (hasPreviousContext) {
+                // Agar previous conversation related hai
+                if (lowerMsg.includes('more') || lowerMsg.includes('detail') || lowerMsg.includes('explain')) {
+                    return getDetailedResponse(lastUserMessage, lowerMsg);
+                }
+                else if (lowerMsg.includes('example') || lowerMsg.includes('example')) {
+                    return getExampleResponse(lastUserMessage);
+                }
+            }
+
+            // Science & Technology
+            if (lowerMsg.includes('quantum') || lowerMsg.includes('physics')) {
+                return `Quantum computing leverages quantum mechanics to process information. Unlike classical bits (0 or 1), quantum bits (qubits) can exist in multiple states simultaneously through superposition. This allows quantum computers to solve certain problems much faster than traditional computers.`;
+            }
+            else if (lowerMsg.includes('ai') || lowerMsg.includes('artificial intelligence')) {
+                return `Artificial Intelligence (AI) refers to computer systems that can perform tasks typically requiring human intelligence. This includes machine learning, natural language processing, computer vision, and robotics.`;
+            }
+            else if (lowerMsg.includes('programming') || lowerMsg.includes('coding')) {
+                return `Programming involves writing instructions for computers to execute. Popular languages include Python for data science, JavaScript for web development, and Java for enterprise applications.`;
+            }
+
+            // Geography
+            else if (lowerMsg.includes('japan') || lowerMsg.includes('tokyo')) {
+                return `Tokyo is the capital of Japan, with over 37 million people in its metropolitan area. It's a global hub for technology and culture. Japan is known for its rich history and advanced technology.`;
+            }
+            else if (lowerMsg.includes('india') || lowerMsg.includes('delhi')) {
+                return `India is the world's largest democracy. New Delhi is its capital, while Mumbai is the financial hub. India is known for its diverse culture and ancient history.`;
+            }
+
+            // Writing & Literature
+            else if (lowerMsg.includes('poem') || lowerMsg.includes('poetry')) {
+                return `In the quiet of the morning light,\nWhere dreams still linger, soft and bright,\nThe world awakens, fresh and new,\nFilled with promise, pure and true.`;
+            }
+
+            // Default context-aware response
+            else {
+                if (hasPreviousContext) {
+                    return `Based on our previous discussion about "${lastUserMessage.substring(0, 50)}...", I understand you're asking about "${originalMsg}". ${getContextualResponse(lastUserMessage, originalMsg)}`;
+                } else {
+                    return `I understand you're asking about "${originalMsg}". That's an interesting topic! Could you provide more specific details about what you'd like to know?`;
+                }
+            }
+        }
+
+        // Contextual responses for follow-up questions
+        function getContextualResponse(previousMessage, currentMessage) {
+            const prevLower = previousMessage.toLowerCase();
+            const currLower = currentMessage.toLowerCase();
+            
+            if (prevLower.includes('quantum') && currLower.includes('work')) {
+                return `Quantum computers work by using qubits that can represent multiple states simultaneously through superposition and can be entangled with each other, allowing for parallel computation on a massive scale.`;
+            }
+            else if (prevLower.includes('programming') && currLower.includes('learn')) {
+                return `To start learning programming, I'd recommend beginning with Python as it has simple syntax and is versatile. Practice with small projects and gradually build up to more complex applications.`;
+            }
+            else if (prevLower.includes('japan') && currLower.includes('culture')) {
+                return `Japanese culture is rich with traditions like tea ceremony, martial arts, and festivals. Modern Japanese culture also includes anime, manga, and advanced technology integration.`;
+            }
+            
+            return `I'd be happy to provide more information about this. What specific aspect are you most interested in?`;
+        }
+
+        function getDetailedResponse(topic, query) {
+            return `Let me provide more detailed information about ${topic}:\n\n${getAdditionalDetails(topic)}`;
+        }
+
+        function getExampleResponse(topic) {
+            return `Here's an example related to ${topic}:\n\n${getPracticalExample(topic)}`;
+        }
+
+        function getAdditionalDetails(topic) {
+            if (topic.includes('quantum')) {
+                return `Additional details about quantum computing:\n• Uses principles like superposition and entanglement\n• Potential applications in cryptography and drug discovery\n• Major companies working on it include Google, IBM, and Microsoft\n• Still in experimental stages but advancing rapidly`;
+            }
+            return `I can provide more in-depth information about this topic. What specific area would you like me to focus on?`;
+        }
+
+        function getPracticalExample(topic) {
+            if (topic.includes('programming')) {
+                return `Example: Simple Python function\n\`\`\`python\ndef greet(name):\n    return f"Hello, {name}!"\n\nprint(greet("Alice"))\n# Output: Hello, Alice!\n\`\`\``;
+            }
+            return `Here's a practical example related to your query. Would you like me to elaborate further?`;
+        }
+
+        // Normal message without typewriter
         function addMessage(sender, text) {
             const container = document.getElementById('messages');
             const messageDiv = document.createElement('div');
@@ -665,13 +810,70 @@ Bringing joy and banishing all fear.`,
             `;
             
             container.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Message with typewriter effect
+        function addMessageWithTypewriter(sender, text) {
+            const container = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
             
-            setTimeout(() => {
-                container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }, 100);
+            messageDiv.className = sender === 'user' ? 'message-user' : 'message-ai';
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        sender === 'user' ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gradient-to-r from-green-400 to-blue-500'
+                    }">
+                        <i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'} text-white text-xs"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold mb-1 ${sender === 'user' ? 'text-purple-300' : 'text-blue-300'} text-sm">${sender === 'user' ? 'You' : 'CodeHatch AI'}</div>
+                        <div id="typewriter-${Date.now()}" class="text-slate-200 leading-relaxed text-sm typewriter"></div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Typewriter effect
+            const typewriterElement = document.getElementById(`typewriter-${Date.now()}`);
+            typeText(typewriterElement, text, 20);
+        }
+
+        // Typewriter effect function with AUTO SCROLL
+        function typeText(element, text, speed = 30) {
+            let i = 0;
+            element.innerHTML = '';
+            
+            function type() {
+                if (i < text.length) {
+                    // Format code blocks properly
+                    if (text.substring(i, i + 3) === '```') {
+                        const codeBlockEnd = text.indexOf('```', i + 3);
+                        if (codeBlockEnd !== -1) {
+                            const codeContent = text.substring(i, codeBlockEnd + 3);
+                            element.innerHTML = formatMessage(text.substring(0, codeBlockEnd + 3));
+                            i = codeBlockEnd + 3;
+                        }
+                    }
+                    
+                    const currentText = text.substring(0, i + 1);
+                    element.innerHTML = formatMessage(currentText);
+                    i++;
+                    
+                    // HAR CHARACTER TYPE HONE KE BAAD SCROLL KARO
+                    scrollToBottom();
+                    setTimeout(type, speed);
+                } else {
+                    // Typewriter complete - remove cursor
+                    element.classList.remove('typewriter');
+                    // Final scroll
+                    scrollToBottom();
+                }
+            }
+            
+            type();
         }
 
         function formatMessage(content) {
@@ -702,18 +904,24 @@ Bringing joy and banishing all fear.`,
                 </div>
             `;
             container.appendChild(typingDiv);
-            
-            setTimeout(() => {
-                container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }, 100);
+            scrollToBottom();
         }
 
         function hideTyping() {
             const typing = document.getElementById('typingIndicator');
             if (typing) typing.remove();
+        }
+
+        // IMPROVED SCROLL FUNCTION - HAR BAAR BOTTOM PE SCROLL KAREGA
+        function scrollToBottom() {
+            const container = document.getElementById('messages');
+            // Thoda delay karo taki DOM update ho jaye
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 10);
         }
 
         // Auto-focus on input
