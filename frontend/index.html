@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeHatch AI - Your AI Assistant</title>
+    <title>DevNest AI - Universal Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,7 +27,6 @@
             border-radius: 18px 18px 4px 18px;
             margin-left: 20%;
             max-width: 90%;
-            position: relative;
         }
         .message-ai {
             background: #1e293b;
@@ -34,7 +34,6 @@
             border-radius: 18px 18px 18px 4px;
             margin-right: 20%;
             max-width: 90%;
-            position: relative;
         }
         .typing-indicator span {
             animation: bounce 1.4s infinite ease-in-out both;
@@ -60,111 +59,12 @@
         }
         [x-cloak] { display: none !important; }
         
+        /* Smooth scrolling */
         .messages-container {
             scroll-behavior: smooth;
         }
         
-        /* Message actions */
-        .message-actions {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        
-        .message-user:hover .message-actions,
-        .message-ai:hover .message-actions {
-            opacity: 1;
-        }
-        
-        .action-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-        
-        /* Code block styling */
-        .code-block {
-            position: relative;
-            margin: 8px 0;
-        }
-        
-        .code-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 8px;
-            background: #1a202c;
-            border-radius: 6px 6px 0 0;
-            border: 1px solid #2d3748;
-            border-bottom: none;
-        }
-        
-        .code-language {
-            font-size: 0.7rem;
-            color: #a0aec0;
-            font-weight: 500;
-        }
-        
-        .copy-code-btn {
-            background: #2d3748;
-            border: none;
-            border-radius: 4px;
-            padding: 2px 8px;
-            color: #e2e8f0;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .copy-code-btn:hover {
-            background: #4a5568;
-        }
-        
-        .copy-code-btn.copied {
-            background: #48bb78;
-            color: white;
-        }
-        
-        .code-content {
-            background: #1a202c;
-            border: 1px solid #2d3748;
-            border-radius: 0 0 6px 6px;
-            padding: 12px;
-            overflow-x: auto;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
-        
-        /* Real-time typing effect */
-        .typing-cursor {
-            display: inline-block;
-            width: 2px;
-            height: 1em;
-            background: #e2e8f0;
-            margin-left: 2px;
-            animation: blink 1s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-        
+        /* Mobile First Design */
         @media (max-width: 768px) {
             .message-user, .message-ai {
                 margin-left: 10% !important;
@@ -182,15 +82,6 @@
                 padding: 12px !important;
                 font-size: 16px !important;
             }
-            
-            .message-actions {
-                opacity: 1;
-                position: static;
-                display: flex;
-                gap: 4px;
-                margin-top: 8px;
-                justify-content: flex-end;
-            }
         }
     </style>
 </head>
@@ -200,12 +91,10 @@
         loggedIn: false,
         showLoginModal: false,
         username: 'User',
-        userEmail: '',
-        isLoading: false,
-        conversationHistory: []
+        userEmail: ''
     }" class="mobile-container">
         
-        <!-- Header -->
+        <!-- Header - Mobile Optimized -->
         <div class="bg-slate-800 border-b border-slate-700 p-4 mobile-padding">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -213,8 +102,8 @@
                         <i class="fas fa-brain text-white text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold text-white mobile-text-sm">CodeHatch AI</h1>
-                        <p class="text-slate-400 text-xs">Your AI Assistant</p>
+                        <h1 class="text-lg font-bold text-white mobile-text-sm">DevNest AI</h1>
+                        <p class="text-slate-400 text-xs">Universal Assistant</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
@@ -231,7 +120,7 @@
             </div>
         </div>
 
-        <!-- Tabs -->
+        <!-- Tabs - Mobile Navigation -->
         <div class="bg-slate-800 border-b border-slate-700 p-2 mobile-padding">
             <div class="flex space-x-1">
                 <button 
@@ -258,7 +147,7 @@
             </div>
         </div>
 
-        <!-- Main Content -->
+        <!-- Main Content Area -->
         <div class="flex-1 overflow-hidden">
             <!-- Chat Tab -->
             <template x-if="activeTab === 'chat'">
@@ -272,31 +161,43 @@
                                     <i class="fas fa-robot text-white text-xs"></i>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <div class="font-semibold text-blue-300 text-sm mb-1">CodeHatch AI</div>
+                                    <div class="font-semibold text-blue-300 text-sm mb-1">DevNest AI</div>
                                     <div class="text-slate-200 text-sm leading-relaxed">
-                                        <template x-if="!loggedIn">
-                                            <p class="mb-2">Hello! I'm CodeHatch AI, your intelligent assistant. I can help you with anything! 🚀</p>
-                                        </template>
-                                        <template x-if="loggedIn">
-                                            <p class="mb-2">Hello <span x-text="username"></span>! 👋 I'm CodeHatch AI, your intelligent assistant.</p>
-                                        </template>
-                                        <p class="mb-3">I can help you with:</p>
+                                        <p class="mb-2">Hello! I'm your universal AI assistant. I can help you with:</p>
                                         <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
-                                            <li>Writing & explaining code</li>
-                                            <li>Answering general questions</li>
-                                            <li>Creative writing & content</li>
-                                            <li>Problem solving & analysis</li>
-                                            <li>Learning & research</li>
+                                            <li>Answering questions on any topic</li>
+                                            <li>Writing and content creation</li>
+                                            <li>Problem solving and explanations</li>
+                                            <li>Learning and research assistance</li>
                                         </ul>
-                                        <p class="mt-2 text-xs">Ask me anything! 💫</p>
+                                        <p class="mt-2 text-xs">What would you like to know today? 👇</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Input Area -->
+                    <!-- Quick Actions - Mobile Optimized -->
                     <div class="p-3 border-t border-slate-700 mobile-padding">
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button onclick="quickAction('Explain quantum computing')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fas fa-atom text-blue-400 mb-1 block"></i>
+                                Science
+                            </button>
+                            <button onclick="quickAction('Write a poem about nature')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fas fa-pen text-green-400 mb-1 block"></i>
+                                Writing
+                            </button>
+                            <button onclick="quickAction('What is the capital of Japan?')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fas fa-globe text-orange-400 mb-1 block"></i>
+                                Geography
+                            </button>
+                            <button onclick="quickAction('How to improve productivity?')" class="bg-slate-700/50 hover:bg-slate-600 p-2 rounded-lg transition text-xs text-center border border-slate-600">
+                                <i class="fas fa-lightbulb text-yellow-400 mb-1 block"></i>
+                                Advice
+                            </button>
+                        </div>
+
                         <!-- Input Area -->
                         <div class="flex space-x-2">
                             <div class="flex-1 relative">
@@ -312,12 +213,6 @@
                                 </button>
                             </div>
                         </div>
-                        <template x-if="!loggedIn">
-                            <p class="text-gray-500 text-xs mt-2 text-center">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Chatting as guest - <button @click="activeTab = 'login'" class="text-blue-400 hover:text-blue-300 underline">Sign in</button> to save your history
-                            </p>
-                        </template>
                     </div>
                 </div>
             </template>
@@ -325,33 +220,29 @@
             <!-- History Tab -->
             <template x-if="activeTab === 'history'">
                 <div class="h-full p-4 mobile-padding">
-                    <template x-if="!loggedIn">
+                    <template x-if="!$data.loggedIn">
                         <div class="text-center h-full flex flex-col items-center justify-center">
                             <i class="fas fa-history text-4xl mb-4 text-slate-500"></i>
                             <h3 class="text-lg font-semibold text-slate-300 mb-2">Chat History</h3>
                             <p class="text-slate-400 text-sm mb-4">Login to save and view your chat history</p>
                             <button 
-                                @click="activeTab = 'login'" 
+                                @click="$data.activeTab = 'login'" 
                                 class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition font-medium"
                             >
                                 <i class="fas fa-sign-in-alt mr-2"></i>Go to Login
                             </button>
                         </div>
                     </template>
-                    <template x-if="loggedIn">
+                    <template x-if="$data.loggedIn">
                         <div class="space-y-3">
-                            <h3 class="text-lg font-semibold text-white mb-4">Your Conversation History</h3>
+                            <h3 class="text-lg font-semibold text-white mb-4">Your Chat History</h3>
                             <div class="bg-slate-800 rounded-lg p-3 border border-slate-700">
-                                <div class="font-medium text-white">Science & Technology Discussion</div>
-                                <div class="text-slate-400 text-sm">Today - 8 messages</div>
+                                <div class="font-medium text-white">Science Questions</div>
+                                <div class="text-slate-400 text-sm">Yesterday - 5 messages</div>
                             </div>
                             <div class="bg-slate-800 rounded-lg p-3 border border-slate-700">
-                                <div class="font-medium text-white">Creative Writing Help</div>
-                                <div class="text-slate-400 text-sm">Yesterday - 12 messages</div>
-                            </div>
-                            <div class="bg-slate-800 rounded-lg p-3 border border-slate-700">
-                                <div class="font-medium text-white">Learning & Research</div>
-                                <div class="text-slate-400 text-sm">2 days ago - 15 messages</div>
+                                <div class="font-medium text-white">Writing Assistance</div>
+                                <div class="text-slate-400 text-sm">2 days ago - 3 messages</div>
                             </div>
                         </div>
                     </template>
@@ -361,13 +252,13 @@
             <!-- Login/Account Tab -->
             <template x-if="activeTab === 'login'">
                 <div class="h-full p-4 mobile-padding">
-                    <template x-if="!loggedIn">
+                    <template x-if="!$data.loggedIn">
                         <div class="text-center h-full flex flex-col justify-center">
                             <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                 <i class="fas fa-user-lock text-white text-2xl"></i>
                             </div>
                             
-                            <h3 class="text-xl font-bold text-white mb-2">Welcome to CodeHatch AI</h3>
+                            <h3 class="text-xl font-bold text-white mb-2">Welcome to DevNest AI</h3>
                             <p class="text-slate-400 text-sm mb-6">Login to unlock all features</p>
 
                             <!-- Social Login Buttons -->
@@ -389,22 +280,49 @@
                                 </button>
                             </div>
 
-                            <div class="text-center mt-6">
+                            <div class="relative my-6">
+                                <div class="absolute inset-0 flex items-center">
+                                    <div class="w-full border-t border-slate-600"></div>
+                                </div>
+                                <div class="relative flex justify-center text-sm">
+                                    <span class="px-2 bg-slate-900 text-slate-400">Or continue with email</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-2 text-left">Email</label>
+                                    <input type="email" id="emailInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="your@email.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-2 text-left">Password</label>
+                                    <input type="password" id="passwordInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 mobile-input" placeholder="••••••••">
+                                </div>
+                            </div>
+
+                            <button 
+                                onclick="emailLogin()"
+                                class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-600 hover:to-purple-700 transition mb-4"
+                            >
+                                Sign In
+                            </button>
+
+                            <div class="text-center">
                                 <button class="text-slate-400 hover:text-white text-sm transition">
-                                    Don't have an account? <span class="text-blue-400 hover:text-blue-300" onclick="alert('Use Google/GitHub login')">Sign up with social login</span>
+                                    Don't have an account? <span class="text-blue-400 hover:text-blue-300" onclick="alert('Use Google/GitHub login or contact admin')">Sign up</span>
                                 </button>
                             </div>
                         </div>
                     </template>
 
-                    <template x-if="loggedIn">
+                    <template x-if="$data.loggedIn">
                         <div class="space-y-6">
                             <div class="text-center">
                                 <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <i class="fas fa-user-check text-white text-xl"></i>
                                 </div>
-                                <h3 class="text-xl font-bold text-white" x-text="username"></h3>
-                                <p class="text-slate-400 text-sm mt-1" x-text="userEmail"></p>
+                                <h3 class="text-xl font-bold text-white" x-text="$data.username"></h3>
+                                <p class="text-slate-400 text-sm mt-1" x-text="$data.userEmail"></p>
                                 <p class="text-green-400 text-sm mt-2">✓ Logged In</p>
                             </div>
 
@@ -423,16 +341,12 @@
                                     <div class="font-medium text-white mb-2">Usage Stats</div>
                                     <div class="text-slate-400 text-sm space-y-1">
                                         <div class="flex justify-between">
-                                            <span>Conversations Today:</span>
-                                            <span>15</span>
+                                            <span>Chats Today:</span>
+                                            <span>12</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span>Questions Asked:</span>
-                                            <span>42</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Topics Explored:</span>
-                                            <span>8</span>
+                                            <span>24</span>
                                         </div>
                                     </div>
                                 </div>
@@ -452,60 +366,20 @@
     </div>
 
     <script>
-        // Global variables for conversation management
-        let conversationHistory = [];
-        let isGenerating = false;
-
-        // Supabase initialization
+        // Supabase initialization - SABSE PEHLE
         let supabase;
-
-        // Environment Configuration
-        const CONFIG = {
-            // Vercel Environment Variables - Vite prefix ke saath
-            GROQ_API_KEY: typeof import !== 'undefined' && import.meta && import.meta.env ? 
-                          import.meta.env.VITE_GROQ_API_KEY : 
-                          (window.ENV ? window.ENV.GROQ_API_KEY : ''),
-            
-            GROQ_API_URL: 'https://api.groq.com/openai/v1/chat/completions',
-            
-            SUPABASE_URL: typeof import !== 'undefined' && import.meta && import.meta.env ? 
-                         import.meta.env.VITE_SUPABASE_URL : 
-                         (window.ENV ? window.ENV.SUPABASE_URL : 'https://dpkhytntovdupyppkgdc.supabase.co'),
-            
-            SUPABASE_ANON_KEY: typeof import !== 'undefined' && import.meta && import.meta.env ? 
-                              import.meta.env.VITE_SUPABASE_ANON_KEY : 
-                              (window.ENV ? window.ENV.SUPABASE_ANON_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg')
-        };
-
-        // Configuration check
-        console.log('🔧 Configuration Loaded:', {
-            hasGroqKey: !!CONFIG.GROQ_API_KEY,
-            groqKeyLength: CONFIG.GROQ_API_KEY ? CONFIG.GROQ_API_KEY.length : 0,
-            hasSupabase: !!CONFIG.SUPABASE_URL
-        });
-
-        if (!CONFIG.GROQ_API_KEY) {
-            console.error('❌ GROQ_API_KEY not found in environment variables');
-        }
 
         function initSupabase() {
             try {
-                const supabaseUrl = CONFIG.SUPABASE_URL;
-                const supabaseKey = CONFIG.SUPABASE_ANON_KEY;
+                const supabaseUrl = 'https://dpkhytntovdupyppkgdc.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwa2h5dG50b3ZkdXB5cHBrZ2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTE5NjQsImV4cCI6MjA3MzYyNzk2NH0.nBVRjzj7izsPP3rDt8p7UDclkuHYw4vPSYZ92LkfzHg';
                 
                 if (typeof window.supabase !== 'undefined') {
-                    supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
-                        auth: {
-                            persistSession: true,
-                            autoRefreshToken: true,
-                            detectSessionInUrl: true,
-                            storage: window.localStorage
-                        }
-                    });
-                    console.log('✅ Supabase initialized with persistence');
+                    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    console.log('✅ Supabase initialized successfully');
                     checkAuthState();
-                    setupAuthListener();
                 } else {
+                    console.log('⏳ Waiting for Supabase CDN to load...');
                     setTimeout(initSupabase, 100);
                 }
             } catch (error) {
@@ -513,83 +387,19 @@
             }
         }
 
-        // Check auth state
+        // Check auth state on page load
         async function checkAuthState() {
             try {
                 if (!supabase) {
                     console.log('Supabase not ready yet');
                     return;
                 }
-                
-                const { data: { session }, error } = await supabase.auth.getSession();
-                
-                if (error) {
-                    console.error('Session error:', error);
-                    await supabase.auth.signOut();
-                    updateUILogout();
-                    return;
-                }
-                
-                console.log('🔍 Session check:', session ? 'User logged in' : 'No user');
-                
-                if (session && session.user) {
-                    updateUI(session.user, false);
-                } else {
-                    updateUILogout();
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    updateUI(session.user);
                 }
             } catch (error) {
                 console.error('Auth check error:', error);
-                updateUILogout();
-            }
-        }
-
-        // Auth state listener
-        function setupAuthListener() {
-            if (!supabase) {
-                setTimeout(setupAuthListener, 100);
-                return;
-            }
-            
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-                console.log('🔄 Auth state changed:', event);
-                
-                switch (event) {
-                    case 'SIGNED_IN':
-                        if (session?.user) {
-                            updateUI(session.user, true);
-                        }
-                        break;
-                        
-                    case 'SIGNED_OUT':
-                        await clearAuthData();
-                        updateUILogout();
-                        break;
-                        
-                    case 'INITIAL_SESSION':
-                        if (session?.user) {
-                            updateUI(session.user, false);
-                        } else {
-                            updateUILogout();
-                        }
-                        break;
-                }
-            });
-            
-            window.authSubscription = subscription;
-        }
-
-        // Clear all auth data
-        async function clearAuthData() {
-            try {
-                localStorage.removeItem('supabase.auth.token');
-                localStorage.removeItem('sb-dpkhytntovdupyppkgdc-auth-token');
-                sessionStorage.clear();
-                
-                if (supabase) {
-                    await supabase.auth.signOut();
-                }
-            } catch (error) {
-                console.error('Error clearing auth data:', error);
             }
         }
 
@@ -605,10 +415,11 @@
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin
+                        redirectTo: 'https://devnest-ai.vercel.app'
                     }
                 });
                 if (error) throw error;
+                console.log('✅ Google login initiated');
             } catch (error) {
                 console.error('Google login error:', error);
                 alert('Google login failed: ' + error.message);
@@ -627,13 +438,45 @@
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'github',
                     options: {
-                        redirectTo: window.location.origin
+                        redirectTo: 'https://devnest-ai.vercel.app'
                     }
                 });
                 if (error) throw error;
+                console.log('✅ GitHub login initiated');
             } catch (error) {
                 console.error('GitHub login error:', error);
                 alert('GitHub login failed: ' + error.message);
+            }
+        }
+
+        // Email Login (Basic)
+        async function emailLogin() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            try {
+                if (!supabase) {
+                    alert('Please wait, app is still loading...');
+                    return;
+                }
+
+                console.log('🚀 Starting email login...');
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                console.log('✅ Email login successful');
+                
+            } catch (error) {
+                console.error('Email login error:', error);
+                alert('Login failed: ' + error.message);
             }
         }
 
@@ -642,52 +485,58 @@
             try {
                 if (!supabase) return;
                 
-                console.log('🚪 Logging out...');
-                await clearAuthData();
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                
+                // Update UI - FIXED
                 updateUILogout();
-                
-                setTimeout(() => {
-                    alert('Logged out successfully!');
-                }, 300);
-                
+                alert('Logged out successfully!');
             } catch (error) {
                 console.error('Logout error:', error);
                 alert('Logout failed: ' + error.message);
             }
         }
 
-        // Update UI when auth state changes
-        function updateUI(user, showAlert = false) {
-            console.log('🔄 Updating UI for user:', user?.email);
+        // Update UI when auth state changes - COMPLETELY FIXED
+        function updateUI(user) {
+            console.log('🔄 Updating UI for user:', user.email);
             
             try {
+                // Alpine.js component directly access karo
                 const alpineElement = document.querySelector('[x-data]');
                 if (alpineElement && alpineElement.__x) {
                     const alpine = alpineElement.__x;
                     
+                    // Alpine data update karo
                     alpine.$data.loggedIn = true;
-                    alpine.$data.username = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
-                    alpine.$data.userEmail = user.email || '';
-                    if (alpine.$data.activeTab === 'login') {
-                        alpine.$data.activeTab = 'chat';
-                    }
+                    alpine.$data.username = user.user_metadata?.name || user.email.split('@')[0];
+                    alpine.$data.userEmail = user.email;
+                    alpine.$data.activeTab = 'chat'; // Automatically chat tab pe switch karo
                     
-                    console.log('✅ UI Updated - Logged In:', alpine.$data.username);
+                    console.log('✅ Alpine UI Updated:', alpine.$data.username);
                     
+                    // Force Alpine reactivity
                     Alpine.nextTick(() => {
-                        console.log('Alpine reactivity triggered for login');
+                        console.log('Alpine reactivity triggered');
                     });
                 }
                 
+                // Success message
+                setTimeout(() => {
+                    alert(`✅ Login successful! Welcome ${user.user_metadata?.name || user.email}`);
+                }, 500);
+                
             } catch (error) {
                 console.error('UI update error:', error);
+                // Fallback - page refresh
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         }
 
-        // Update UI for logout
+        // Update UI for logout - FIXED
         function updateUILogout() {
-            console.log('🔄 Updating UI for logout');
-            
             try {
                 const alpineElement = document.querySelector('[x-data]');
                 if (alpineElement && alpineElement.__x) {
@@ -696,9 +545,9 @@
                     alpine.$data.loggedIn = false;
                     alpine.$data.username = 'User';
                     alpine.$data.userEmail = '';
-                    alpine.$data.activeTab = 'chat';
+                    alpine.$data.activeTab = 'login'; // Logout ke baad login tab pe jao
                     
-                    console.log('✅ UI Updated - Logged Out');
+                    console.log('✅ UI updated for logout');
                     
                     Alpine.nextTick(() => {
                         console.log('Alpine reactivity triggered for logout');
@@ -709,199 +558,98 @@
             }
         }
 
-        // Chat functions
+        // Listen for auth state changes - FIXED
+        function setupAuthListener() {
+            if (!supabase) {
+                setTimeout(setupAuthListener, 100);
+                return;
+            }
+            
+            supabase.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state changed:', event);
+                if (event === 'SIGNED_IN' && session?.user) {
+                    updateUI(session.user);
+                } else if (event === 'SIGNED_OUT') {
+                    updateUILogout();
+                }
+            });
+        }
+
+        // Page load initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page loaded, initializing Supabase...');
+            initSupabase();
+            setupAuthListener();
+        });
+
+        // Existing chat functions
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
         }
 
+        function quickAction(prompt) {
+            document.getElementById('messageInput').value = prompt;
+            sendMessage();
+        }
+
         async function sendMessage() {
-            if (isGenerating) {
-                alert('Please wait for the current response to complete...');
-                return;
-            }
-
-            // API key check
-            if (!CONFIG.GROQ_API_KEY) {
-                alert('❌ API Key not configured. Please check environment variables.');
-                return;
-            }
-
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             
             if (!message) return;
 
             input.value = '';
-            const messageId = 'msg_' + Date.now();
-            addMessage('user', message, messageId);
-            
-            conversationHistory.push({ role: 'user', content: message });
-            
-            const typingElement = showTyping();
-            isGenerating = true;
+            addMessage('user', message);
+            showTyping();
 
             try {
-                // Prepare messages with conversation history
-                const recentHistory = conversationHistory.slice(-6);
-                const messages = [
-                    {
-                        role: 'system',
-                        content: 'You are CodeHatch AI, a helpful and intelligent assistant that can help with anything - coding, writing, science, learning, creative tasks, business, productivity, and general knowledge. Be friendly, detailed, and helpful in all your responses. Maintain conversation context.'
-                    },
-                    ...recentHistory
-                ];
-
-                console.log('📤 Sending request to Groq API...');
-                
-                const response = await fetch(CONFIG.GROQ_API_URL, {
+                const response = await fetch('https://devnest-ai.onrender.com/api/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${CONFIG.GROQ_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: 'llama3-8b-8192',
-                        messages: messages,
-                        temperature: 0.7,
-                        max_tokens: 1024,
-                        stream: false
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        message: message,
+                        userId: 'mobile-user-' + Date.now()
                     })
                 });
 
-                console.log('📥 Response status:', response.status);
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API Error:', errorText);
-                    throw new Error(`Groq API error: ${response.status} - ${errorText}`);
-                }
-
-                const data = await response.json();
-                console.log('✅ API Response received:', data);
-                
-                if (data.choices && data.choices[0] && data.choices[0].message) {
-                    const aiResponse = data.choices[0].message.content;
-                    
-                    conversationHistory.push({ role: 'assistant', content: aiResponse });
-                    
+                if (response.ok) {
+                    const data = await response.json();
                     hideTyping();
-                    await typeMessageRealTime(aiResponse, typingElement);
-                    
+                    addMessage('ai', data.response || data.message);
                 } else {
-                    throw new Error('Invalid response from Groq API');
+                    throw new Error('Backend unavailable');
                 }
 
             } catch (error) {
-                console.error('❌ Groq API error:', error);
                 hideTyping();
+                const responses = {
+                    'science': `Quantum computing is an area of computing focused on developing computer technology based on the principles of quantum theory. It uses quantum bits or qubits which can exist in multiple states simultaneously, unlike classical bits which are either 0 or 1.`,
+                    'writing': `Nature's gentle whispers in the breeze,
+Trees swaying softly, putting minds at ease.
+Birds singing melodies so sweet and clear,
+Bringing joy and banishing all fear.`,
+                    'geography': `The capital of Japan is Tokyo, one of the world's most populous metropolitan areas. It's known for its modern skyscrapers, historic temples, and vibrant pop culture.`,
+                    'default': `I'm here to help with any questions you might have! Whether it's about science, history, writing, or general knowledge, feel free to ask me anything.`
+                };
                 
-                // Smart fallback response
-                const fallbackResponse = getSmartResponse(message);
-                conversationHistory.push({ role: 'assistant', content: fallbackResponse });
+                const lowerMsg = message.toLowerCase();
+                let responseText = responses.default;
                 
-                await typeMessageRealTime(fallbackResponse, typingElement);
-            } finally {
-                isGenerating = false;
+                if (lowerMsg.includes('quantum') || lowerMsg.includes('science')) responseText = responses.science;
+                else if (lowerMsg.includes('poem') || lowerMsg.includes('write')) responseText = responses.writing;
+                else if (lowerMsg.includes('japan') || lowerMsg.includes('capital')) responseText = responses.geography;
+                
+                addMessage('ai', responseText);
             }
         }
 
-        // Smart fallback responses
-        function getSmartResponse(message) {
-            const lowerMsg = message.toLowerCase();
-            
-            const responses = {
-                'hello': `Hello! 👋 I'm CodeHatch AI, your intelligent assistant. I can help you with anything! 🚀\n\nWhether you need:\n• Coding & programming help\n• Writing & content creation\n• Learning & explanations\n• Problem solving & analysis\n• Science & technology\n• Business & productivity\n\nWhat would you like to explore today? 💫`,
-                
-                'hi': `Hi there! 🎉 I'm CodeHatch AI, your AI assistant.\n\nI'm here to help you with:\n- Programming and coding\n- Learning and education\n- Creative writing\n- Problem solving\n- Research and analysis\n- And much more!\n\nWhat can I help you with today? 🚀`,
-                
-                'test': `✅ Test successful! I'm CodeHatch AI and I'm working properly.\n\nI can help you with:\n🔹 Coding & programming\n🔹 Writing & content\n🔹 Learning & research\n🔹 Problem solving\n🔹 Creative tasks\n\nWhat would you like me to help you with? 💫`,
-                
-                'help': `**I'm Here to Help!** 🤝\n\nI can assist you with:\n\n💻 **Programming & Tech**\n- Code writing & debugging\n- Web development\n- Programming concepts\n- Best practices\n\n📚 **Learning & Education**\n- Explanations & tutorials\n- Study resources\n- Concept breakdowns\n\n✍️ **Writing & Content**\n- Creative writing\n- Content creation\n- Editing & improvement\n\n🔧 **Problem Solving**\n- Technical issues\n- Learning challenges\n- Project planning\n\nJust tell me what you need help with! 💫`,
-                
-                'python': `**Python Programming** 🐍\n\nHere's a Python example:\n\n\`\`\`python\n# Function to calculate factorial\ndef factorial(n):\n    if n == 0:\n        return 1\n    else:\n        return n * factorial(n-1)\n\n# Usage\nprint(factorial(5))  # Output: 120\n\`\`\`\n\nNeed help with specific Python concepts or anything else?`,
-                
-                'default': `I understand you're asking about: "${message}"\n\nI'd be happy to help you with this! As your general-purpose AI assistant, I can provide:\n\n🔹 **Detailed explanations** on any topic\n🔹 **Step-by-step guidance** for learning\n🔹 **Creative ideas** and inspiration\n🔹 **Problem-solving** strategies\n🔹 **Code examples** and debugging\n🔹 **Research assistance** and analysis\n\nCould you please provide more details about what specific help you need? This will help me give you the most accurate and useful response! 🚀`
-            };
-            
-            // Check for matches
-            for (const [key, response] of Object.entries(responses)) {
-                if (lowerMsg.includes(key)) {
-                    return response;
-                }
-            }
-            
-            return responses.default;
-        }
-
-        // Real-time typing effect
-        async function typeMessageRealTime(text, typingElement) {
-            return new Promise((resolve) => {
-                let index = 0;
-                const speed = 10;
-                const messageId = 'msg_' + Date.now();
-                
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message-ai';
-                messageDiv.id = messageId;
-                messageDiv.innerHTML = `
-                    <div class="flex items-start space-x-2">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-green-400 to-blue-500">
-                            <i class="fas fa-robot text-white text-xs"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-blue-300 text-sm mb-1">CodeHatch AI</div>
-                            <div class="text-slate-200 leading-relaxed text-sm" id="typing-content-${messageId}"></div>
-                        </div>
-                    </div>
-                    <div class="message-actions">
-                        <button class="action-btn" onclick="copyMessage('${messageId}')" title="Copy">
-                            <i class="fas fa-copy text-xs"></i>
-                        </button>
-                    </div>
-                `;
-                
-                // Safe replacement
-                if (typingElement && typingElement.parentNode) {
-                    typingElement.parentNode.replaceChild(messageDiv, typingElement);
-                } else {
-                    document.getElementById('messages').appendChild(messageDiv);
-                }
-                
-                const contentElement = document.getElementById(`typing-content-${messageId}`);
-                
-                function typeCharacter() {
-                    if (index < text.length) {
-                        const currentText = text.substring(0, index + 1);
-                        if (contentElement) {
-                            contentElement.innerHTML = formatMessage(currentText) + '<span class="typing-cursor"></span>';
-                        }
-                        
-                        index++;
-                        
-                        smoothScrollToBottom();
-                        setTimeout(typeCharacter, speed);
-                    } else {
-                        if (contentElement) {
-                            contentElement.innerHTML = formatMessage(text);
-                        }
-                        smoothScrollToBottom();
-                        resolve();
-                    }
-                }
-                
-                typeCharacter();
-            });
-        }
-
-        function addMessage(sender, text, messageId = null) {
+        function addMessage(sender, text) {
             const container = document.getElementById('messages');
             const messageDiv = document.createElement('div');
-            const id = messageId || 'msg_' + Date.now();
             
             messageDiv.className = sender === 'user' ? 'message-user' : 'message-ai';
-            messageDiv.id = id;
             messageDiv.innerHTML = `
                 <div class="flex items-start space-x-2">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -910,67 +658,27 @@
                         <i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'} text-white text-xs"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-semibold mb-1 ${sender === 'user' ? 'text-purple-300' : 'text-blue-300'} text-sm">${sender === 'user' ? 'You' : 'CodeHatch AI'}</div>
+                        <div class="font-semibold mb-1 ${sender === 'user' ? 'text-purple-300' : 'text-blue-300'} text-sm">${sender === 'user' ? 'You' : 'DevNest AI'}</div>
                         <div class="text-slate-200 leading-relaxed whitespace-pre-wrap text-sm">${formatMessage(text)}</div>
                     </div>
-                </div>
-                <div class="message-actions">
-                    <button class="action-btn" onclick="copyMessage('${id}')" title="Copy">
-                        <i class="fas fa-copy text-xs"></i>
-                    </button>
                 </div>
             `;
             
             container.appendChild(messageDiv);
-            smoothScrollToBottom();
+            
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
 
         function formatMessage(content) {
             return content
-                .replace(/\`\`\`(\w+)?\n([^]+?)\n\`\`\`/g, '<div class="code-block"><div class="code-header"><span class="code-language">$1</span><button class="copy-code-btn" onclick="copyCode(this)">Copy</button></div><div class="code-content"><pre><code>$2</code></pre></div></div>')
-                .replace(/\`([^\`]+)\`/g, '<code class="bg-slate-700 px-1.5 py-0.5 rounded text-xs border border-slate-600 text-green-300">$1</code>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+                .replace(/\`\`\`([^]+?)\`\`\`/g, '<div class="bg-slate-900 p-3 my-2 rounded-lg overflow-x-auto border border-slate-600"><code class="whitespace-pre text-xs">$1</code></div>')
+                .replace(/\`(.*?)\`/g, '<code class="bg-slate-700 px-1.5 py-0.5 rounded text-xs border border-slate-600">$1</code>')
                 .replace(/\n/g, '<br>');
-        }
-
-        // Copy message text
-        function copyMessage(messageId) {
-            const messageElement = document.getElementById(messageId);
-            if (messageElement) {
-                const contentElement = messageElement.querySelector('.text-slate-200');
-                if (contentElement) {
-                    const text = contentElement.textContent || contentElement.innerText;
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('Message copied to clipboard!');
-                    });
-                }
-            }
-        }
-
-        // Copy code from code blocks
-        function copyCode(button) {
-            const codeContent = button.closest('.code-block').querySelector('code');
-            const text = codeContent.textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                button.textContent = 'Copied!';
-                button.classList.add('copied');
-                setTimeout(() => {
-                    button.textContent = 'Copy';
-                    button.classList.remove('copied');
-                }, 2000);
-            });
-        }
-
-        // Toast notification
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 2000);
         }
 
         function showTyping() {
@@ -984,7 +692,7 @@
                         <i class="fas fa-robot text-white text-xs"></i>
                     </div>
                     <div>
-                        <div class="font-semibold text-blue-300 text-sm mb-1">CodeHatch AI</div>
+                        <div class="font-semibold text-blue-300 text-sm mb-1">DevNest AI</div>
                         <div class="typing-indicator flex space-x-1">
                             <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
                             <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
@@ -994,8 +702,13 @@
                 </div>
             `;
             container.appendChild(typingDiv);
-            smoothScrollToBottom();
-            return typingDiv;
+            
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
 
         function hideTyping() {
@@ -1003,34 +716,11 @@
             if (typing) typing.remove();
         }
 
-        // Smooth scroll to bottom function
-        function smoothScrollToBottom() {
-            const container = document.getElementById('messages');
-            if (container) {
-                container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }
-        }
-
-        // Page load initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Page loaded, initializing...');
-            initSupabase();
-            
-            setTimeout(() => {
-                const input = document.getElementById('messageInput');
-                if (input) input.focus();
-            }, 1500);
-        });
-
-        // Cleanup
-        window.addEventListener('beforeunload', function() {
-            if (window.authSubscription) {
-                window.authSubscription.unsubscribe();
-            }
-        });
+        // Auto-focus on input
+        setTimeout(() => {
+            const input = document.getElementById('messageInput');
+            if (input) input.focus();
+        }, 1000);
     </script>
 </body>
 </html>
